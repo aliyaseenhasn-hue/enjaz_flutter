@@ -29,11 +29,17 @@ def register(request):
     return render(request, 'signin.html')
 
 
+@login_required
 def profileuser(request):
+    if request.user.is_superuser or request.user.role == 'admin':
+        return redirect('admin-dashboard')
     return render(request, 'profileuser.html')
 
 
+@login_required
 def profile_mhn(request):
+    if request.user.is_superuser or request.user.role == 'admin':
+        return redirect('admin-dashboard')
     return render(request, 'profile_mhn.html')
 
 

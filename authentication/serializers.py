@@ -24,9 +24,16 @@ class UserSerializer(serializers.ModelSerializer):
     agent_profile = serializers.SerializerMethodField()
     profile_photo = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
+    role = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = ['id', 'phone_number', 'full_name', 'role', 'profile_photo', 'agent_profile']
+
+    def get_role(self, obj):
+        if obj.is_superuser:
+            return 'admin'
+        return obj.role
     def get_full_name(self, obj):
         return f"{obj.first_name or ''} {obj.last_name or ''}".strip() or obj.phone_number
     def get_profile_photo(self, obj):

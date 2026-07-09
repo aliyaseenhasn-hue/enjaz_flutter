@@ -27,8 +27,11 @@ urlpatterns = [
     path('agent/verify/', views.AgentVerificationView.as_view(), name='agent-verify'),
 
     # ── إدارة المشرف (Admin) ────────────────────────────────────────────
-    path('admin/users/', views.AdminAllUsersView.as_view(), name='admin-users'),
-    path('admin/agents/<int:user_id>/approve/', views.AdminApproveAgentView.as_view(), name='admin-approve-agent'),
+    path('admin/users/all/', views.AdminAllUsersView.as_view(), name='admin-users-all'),
+    path('admin/users/pending/', views.AdminUserListView.as_view(), name='admin-users-pending'),
+    path('admin/stats/', views.AdminStatsView.as_view(), name='admin-stats'),
+    path('admin/users/<int:user_id>/approve/', views.AdminApproveAgentView.as_view(), name='admin-approve-agent'),
+    path('admin/users/<int:user_id>/reject/', views.AdminRejectAgentView.as_view(), name='admin-reject-agent'),
 
     # ── تغيير دور المستخدم ──────────────────────────────────────────────
     path('change-role/', views.ChangeRoleView.as_view(), name='change-role'),
@@ -41,8 +44,6 @@ urlpatterns = [
     path('django-login/', views.DjangoSessionLoginView.as_view(), name='django-login'),
 
     path('upload-identity/', views.UploadIdentityView.as_view(), name='upload-identity'),
-
-path('admin/agents/<int:user_id>/reject/', views.AdminRejectAgentView.as_view(), name='admin-reject-agent'),
 
     # ── إعادة تعيين كلمة المرور ──────────────────────────────────────────
     path('password-reset/request/', views.PasswordResetRequestView.as_view(), name='password-reset-request'),

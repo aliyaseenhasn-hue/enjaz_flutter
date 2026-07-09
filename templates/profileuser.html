@@ -612,6 +612,7 @@
   async function loadProfile() {
     try {
       const data = await fetchWithAuth('/api/auth/profile/?t=' + Date.now());
+      if (data.role === 'admin') { window.location.href = '/admin/dashboard/'; return; }
       if (data.role === 'agent') { window.location.href = '/profile-mhn/'; return; }
 
       const fullName = data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'مستخدم';

@@ -117,10 +117,11 @@ class LoginView(APIView):
             if not user.is_active:
                 return Response({"detail": "هذا الحساب معطل."}, status=status.HTTP_400_BAD_REQUEST)
             refresh = RefreshToken.for_user(user)
+            user_role = 'admin' if user.is_superuser else getattr(user, 'role', 'customer')
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
-                "role": getattr(user, 'role', 'customer'),
+                "role": user_role,
                 "user": UserSerializer(user, context={'request': request}).data,
                 "detail": "تم تسجيل الدخول بنجاح."
             }, status=status.HTTP_200_OK)
@@ -191,10 +192,11 @@ class GoogleAuthView(APIView):
                 user.save()
 
             refresh = RefreshToken.for_user(user)
+            user_role = 'admin' if user.is_superuser else user.role
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
-                "role": user.role,
+                "role": user_role,
                 "user": UserSerializer(user, context={'request': request}).data
             })
         except Exception as e:
