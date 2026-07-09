@@ -18,7 +18,7 @@ def normalize_iraqi_phone(phone):
 class AgentProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = AgentProfile
-        fields = ['id', 'bio', 'is_verified', 'verification_status', 'balance', 'rating', 'total_jobs', 'id_card_front', 'id_card_back', 'profession', 'city']
+        fields = ['id', 'bio', 'is_verified', 'verification_status', 'balance', 'rating', 'total_jobs', 'id_card_front', 'id_card_back', 'profession', 'custom_profession', 'city']
 
 class UserSerializer(serializers.ModelSerializer):
     agent_profile = serializers.SerializerMethodField()
