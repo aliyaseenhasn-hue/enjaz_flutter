@@ -1,0 +1,205 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إضافة صورة إنجاز</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <style>
+    body {
+      background: linear-gradient(135deg, #fff9f0, #fef7e6);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      font-family: 'Tajawal', sans-serif;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 28px;
+      padding: 28px 24px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+      border: 1px solid #fde68a;
+    }
+    
+    .card-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    
+    .card-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #e08e2e, #c47a25);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      color: white;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 16px rgba(224,142,46,0.3);
+    }
+    
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+    
+    .card-subtitle {
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+    
+    .form-group { margin-bottom: 18px; }
+    
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 13px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14px;
+      background: #f8fafc;
+      color: #0f172a;
+      outline: none;
+      transition: all 0.25s;
+    }
+    
+    .form-control:focus {
+      border-color: #e08e2e;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(224,142,46,0.1);
+    }
+    
+    textarea.form-control {
+      resize: vertical;
+      min-height: 80px;
+      padding: 14px;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    
+    .btn-primary {
+      flex: 1;
+      background: linear-gradient(135deg, #e08e2e, #c47a25);
+      color: white;
+      border: none;
+      padding: 13px;
+      border-radius: 40px;
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      font-family: 'Tajawal', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(224,142,46,0.3);
+      transition: all 0.25s;
+      text-decoration: none;
+    }
+    
+    .btn-primary:hover { box-shadow: 0 6px 20px rgba(224,142,46,0.4); transform: translateY(-1px); }
+    
+    .btn-secondary {
+      flex: 1;
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+      padding: 13px;
+      border-radius: 40px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      font-family: 'Tajawal', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    
+    .btn-secondary:hover { background: #e2e8f0; color: #0f172a; }
+    
+    .errorlist {
+      color: #dc2626;
+      font-size: 0.82rem;
+      margin-top: 4px;
+    }
+    
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 16px;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    
+    .back-link:hover { color: #e08e2e; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-header">
+    <div class="card-icon">📸</div>
+    <div class="card-title">إضافة صورة إنجاز</div>
+    <div class="card-subtitle">قم برفع صورة توضح أحد أعمالك لتظهر للعملاء</div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="form-group">
+      <label for="id_image">الصورة</label>
+      {{ form.image }}
+      {{ form.image.errors }}
+    </div>
+    <div class="form-group">
+      <label for="id_caption">الوصف (اختياري)</label>
+      {{ form.caption }}
+      {{ form.caption.errors }}
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn-primary">
+        <i class="fa-solid fa-upload"></i>
+        رفع الصورة
+      </button>
+      <a href="{% url 'profile-mhn' %}" class="btn-secondary">
+        <i class="fa-solid fa-xmark"></i>
+        إلغاء
+      </a>
+    </div>
+    <a href="{% url 'profile-mhn' %}" class="back-link">
+      <i class="fa-solid fa-arrow-right"></i>
+      العودة للصفحة الرئيسية
+    </a>
+  </form>
+</div>
+
+</body>
+</html>

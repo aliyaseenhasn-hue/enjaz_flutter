@@ -1,0 +1,317 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنجاز - المهنيين المحفوظين</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 24px 20px;
+            border-radius: 0 0 28px 28px;
+        }
+        
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .page-header p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-top: 6px;
+        }
+        
+        .favorites-list {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        
+        .favorite-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .favorite-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .favorite-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: var(--primary);
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        
+        .favorite-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .favorite-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .favorite-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .favorite-profession {
+            font-size: 0.85rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .favorite-stats {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .favorite-stat {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .favorite-stat i {
+            font-size: 0.85rem;
+        }
+        
+        .favorite-stat.rating {
+            color: var(--warning);
+            font-weight: 600;
+        }
+        
+        .favorite-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .remove-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--danger-bg);
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .remove-btn:hover {
+            background: var(--danger);
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .view-btn {
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-full);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        
+        .view-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .empty-state p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+        
+        .empty-state .btn {
+            margin-top: 20px;
+        }
+        
+        .remove-animation {
+            animation: slideOut 0.3s ease forwards;
+        }
+        
+        @keyframes slideOut {
+            to {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1><i class="fa-solid fa-heart"></i> المهنيين المحفوظين</h1>
+    <p>قائمة مهنييك المفضلين للوصول السريع</p>
+</div>
+
+<div id="favoritesContent" class="favorites-list">
+    <!-- سيتم تحميل المحتويات ديناميكياً -->
+</div>
+
+<nav class="bottom-tab-bar">
+    <a href="/profileuser/" class="tab-item"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+    <a href="/service-requests/" class="tab-item"><i class="fa-solid fa-briefcase"></i><span>دليل المهن</span></a>
+    <a href="/create-request/" class="tab-item"><i class="fa-solid fa-plus-circle"></i><span>طلب جديد</span></a>
+    <a href="/create-request/?tab=tracking" class="tab-item"><i class="fa-solid fa-list-check"></i><span>طلباتي</span></a>
+    <a href="/chat/" class="tab-item"><i class="fa-solid fa-envelope"></i><span>الرسائل</span></a>
+    <a href="/settings/" class="tab-item"><i class="fa-solid fa-gear"></i><span>حسابي</span></a>
+</nav>
+
+<script>
+(function() {
+    const token = localStorage.getItem('enjaz_pwa_token');
+    
+    // بيانات تجريبية (يمكن جلبها من API)
+    const mockFavorites = [
+        {
+            id: 1,
+            name: 'أحمد محمد肯德基',
+            profession: 'كهربائي',
+            avatar: null,
+            rating: 4.8,
+            reviews: 156,
+            location: 'بغداد - الكرادة',
+            responseTime: 'خلال ساعة'
+        },
+        {
+            id: 2,
+            name: 'محمد سالم',
+            profession: 'سباك',
+            avatar: null,
+            rating: 4.9,
+            reviews: 203,
+            location: 'بغداد - المنصور',
+            responseTime: 'خلال 30 دقيقة'
+        },
+        {
+            id: 3,
+            name: 'خالد الجبوري',
+            profession: 'نجار أثاث',
+            avatar: null,
+            rating: 4.7,
+            reviews: 89,
+            location: 'بغداد - الأعظمية',
+            responseTime: 'خلال ساعتين'
+        }
+    ];
+(function() {
+  const token = localStorage.getItem('enjaz_pwa_token');
+  if (!token) { window.location.replace('/singin/'); return; }
+
+  function escapeHtml(s) { return s ? s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : ''; }
+
+  async function loadFavorites() {
+    const container = document.getElementById('favoritesContent');
+    try {
+      const res = await fetch('/api/auth/favorites/', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) throw new Error();
+      renderFavorites(await res.json());
+    } catch (e) {
+      container.innerHTML = `<div class="empty-state"><p>❌ فشل تحميل المفضلة</p></div>`;
+    }
+  }
+
+  function renderFavorites(favorites) {
+    const container = document.getElementById('favoritesContent');
+    if (!favorites || !favorites.length) {
+      container.innerHTML = `<div class="empty-state"><i class="fa-regular fa-heart"></i><h3>لا يوجد مهنيين محفوظين</h3><p>احفظ مهنييك المفضلين للوصول السريع إليهم</p><a href="/service-requests/" class="btn btn-primary"><i class="fa-solid fa-search"></i> استكشف المهنيين</a></div>`;
+      return;
+    }
+    container.innerHTML = favorites.map(f => { const a = f.agent; return `
+      <div class="favorite-card" data-agent-id="${a.id}">
+        <div class="favorite-avatar">${a.avatar ? `<img src="${a.avatar}">` : `<i class="fa-solid fa-user"></i>`}</div>
+        <div class="favorite-info">
+          <div class="favorite-name">${escapeHtml(a.full_name || 'مهني')}</div>
+          <div class="favorite-profession">${escapeHtml(a.profession_display || '')}</div>
+          <div class="favorite-stats">
+            <span class="favorite-stat rating"><i class="fa-solid fa-star"></i> ${a.rating || 0}</span>
+            <span class="favorite-stat"><i class="fa-solid fa-check-double"></i> ${a.total_jobs || 0} عمل</span>
+            ${a.city ? `<span class="favorite-stat"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(a.city)}</span>` : ''}
+          </div>
+        </div>
+        <div class="favorite-actions">
+          <button class="remove-btn" onclick="removeFavorite(${a.id})"><i class="fa-solid fa-trash"></i></button>
+          <a href="/professional-detail/${a.id}/" class="view-btn"><i class="fa-solid fa-eye"></i> عرض</a>
+        </div>
+      </div>`; }).join('');
+  }
+
+  window.removeFavorite = async function(agentId) {
+    if (!confirm('هل تريد إزالة هذا المهني من المفضلة؟')) return;
+    try {
+      const res = await fetch(`/api/auth/favorites/${agentId}/`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) loadFavorites();
+    } catch (e) { alert('❌ فشل الاتصال'); }
+  };
+
+  loadFavorites();
+})();
+
+</script>
+
+</body>
+</html>

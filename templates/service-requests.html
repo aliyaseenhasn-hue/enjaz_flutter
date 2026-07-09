@@ -1,0 +1,529 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>إنجاز – دليل المهن الاحترافي</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <style>
+    /* ═══ أنماط خاصة بهذه الصفحة ═══ */
+    
+    /* رأس الصفحة Hero */
+    .page-hero {
+      padding: 32px 20px 24px;
+      text-align: center;
+      background: linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%);
+      border-bottom: 1px solid #ccfbf1;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .page-hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(13,148,136,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    
+    .page-hero::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(14,165,233,0.06) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    
+    .hero-title {
+      font-size: 2rem;
+      font-weight: 900;
+      margin: 0 0 8px;
+      color: #0f172a;
+      position: relative;
+    }
+    
+    .hero-title span {
+      background: linear-gradient(135deg, #0d9488, #0ea5e9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .hero-subtitle {
+      color: #64748b;
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+    
+    /* شبكة المهن المحدثة بشكل كروت */
+    .professions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+      padding: 24px 16px 100px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    
+    .profession-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 24px;
+      padding: 24px 16px;
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .profession-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(13,148,136,0.05) 0%, rgba(14,165,233,0.05) 100%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .profession-card:hover {
+      border-color: #0d9488;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      transform: translateY(-8px);
+    }
+    
+    .profession-card:hover::after {
+      opacity: 1;
+    }
+    
+    .profession-icon {
+      width: 64px;
+      height: 64px;
+      background: #f0fdfa;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      font-size: 1.8rem;
+      color: #0d9488;
+      transition: all 0.3s;
+      z-index: 1;
+    }
+    
+    .profession-card:hover .profession-icon {
+      background: #0d9488;
+      color: white;
+      transform: scale(1.1) rotate(5deg);
+      box-shadow: 0 10px 15px -3px rgba(13, 148, 136, 0.4);
+    }
+    
+    .profession-name {
+      font-size: 1rem;
+      font-weight: 800;
+      margin: 0 0 6px;
+      color: #0f172a;
+      z-index: 1;
+    }
+    
+    .profession-desc {
+      font-size: 0.75rem;
+      color: #64748b;
+      line-height: 1.4;
+      z-index: 1;
+    }
+    
+    /* شريط الموقع */
+    .location-bar {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 16px 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .location-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f0fdfa;
+      color: #0d9488;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border: 1px solid #ccfbf1;
+    }
+    
+    .location-chip i { font-size: 0.85rem; }
+    
+    .location-chip.inactive {
+      background: #f1f5f9;
+      color: #64748b;
+      border-color: #e2e8f0;
+    }
+    
+    .location-chip.inactive i { color: #94a3b8; }
+    
+    .get-location-btn {
+      background: white;
+      border: 2px solid #0d9488;
+      color: #0d9488;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Tajawal', sans-serif;
+      transition: var(--transition);
+    }
+    
+    .get-location-btn:hover {
+      background: #f0fdfa;
+      box-shadow: 0 4px 12px rgba(13,148,136,0.2);
+    }
+    
+    /* اقتراحات البحث */
+    .suggestions-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      background: white;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      z-index: 10;
+      max-height: 260px;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      display: none;
+    }
+    
+    .suggestions-dropdown.show { display: block; animation: fadeIn 0.2s ease; }
+    
+    .suggestion-item {
+      padding: 14px 18px;
+      color: #1e293b;
+      cursor: pointer;
+      display: block;
+      border-bottom: 1px solid var(--border-light);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: var(--transition);
+    }
+    
+    .suggestion-item:hover {
+      background: #f0fdfa;
+      color: #0d9488;
+    }
+    
+    .suggestion-item:last-child { border-bottom: none; }
+    
+    @media (max-width: 480px) {
+      .professions-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 16px 12px 90px; }
+      .hero-title { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ رأس التطبيق ═══ -->
+<header class="app-header">
+  <a href="/" class="app-brand">
+    <div class="app-logo-box">إ</div>
+    <span class="app-title">إنجاز</span>
+  </a>
+  <a href="/profileuser/" class="btn btn-sm btn-ghost" id="nav-profile-link" style="background:#f0fdfa; border:1px solid #ccfbf1;">
+    <i class="fa-solid fa-user-circle"></i>
+    حسابي
+  </a>
+</header>
+
+<!-- ═══ شريط PWA ═══ -->
+<div class="pwa-banner" id="pwa-banner">
+  <div class="pwa-info">
+    <i class="fa-solid fa-mobile-screen-button"></i>
+    <span>ثبّت التطبيق لتجربة أفضل</span>
+  </div>
+  <div class="pwa-actions">
+    <button class="btn btn-sm btn-primary" id="btn-install">تثبيت</button>
+    <button class="btn btn-sm btn-secondary" id="btn-close-banner">لاحقاً</button>
+  </div>
+</div>
+
+<main>
+  <!-- ═══ Hero ═══ -->
+  <div class="page-hero">
+    <h1 class="hero-title">ما الخدمة التي تحتاجها <span>اليوم؟</span></h1>
+    <p class="hero-subtitle">ابحث عن تخصص أو اختر حرفة للتواصل مع الخبراء</p>
+    
+    <!-- شريط البحث -->
+    <div class="search-box" style="max-width:500px; margin:0 auto;">
+      <i class="fa-solid fa-search search-icon"></i>
+      <input type="text" id="search-input" class="search-input" placeholder="ابحث عن مهنة..." autocomplete="off">
+      <div id="suggestions" class="suggestions-dropdown"></div>
+    </div>
+  </div>
+  
+  <!-- شريط الموقع -->
+  <div class="location-bar">
+    <div class="location-chip" id="location-chip">
+      <i class="fa-solid fa-location-dot"></i>
+      <span id="location-text">مرتب حسب الأقرب إليك</span>
+    </div>
+    <button class="get-location-btn" id="get-location-btn" onclick="requestLocationAndReload()">
+      <i class="fa-solid fa-crosshairs"></i>
+      تحديد موقعي
+    </button>
+  </div>
+
+  <!-- ═══ شبكة المهن المحدثة بشكل كروت ═══ -->
+  <div class="professions-grid">
+    <a href="/profession/electrician/" class="profession-card">
+      <div class="profession-icon"><i class="fa-solid fa-bolt"></i></div>
+      <h3 class="profession-name">أعمال الكهرباء</h3>
+      <p class="profession-desc">تأسيس شبكات وصيانة</p>
+    </a>
+    <a href="/profession/lawyer/" class="profession-card">
+      <div class="profession-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+      <h3 class="profession-name">الخدمات القانونية</h3>
+      <p class="profession-desc">محامون واستشارات</p>
+    </a>
+    <a href="/profession/blacksmith/" class="profession-card">
+      <div class="profession-icon"><i class="fa-solid fa-fire-burner"></i></div>
+      <h3 class="profession-name">أعمال الحدادة</h3>
+      <p class="profession-desc">أبواب وشبابيك</p>
+    </a>
+    <a href="/profession/plumber/" class="profession-card">
+      <div class="profession-icon"><i class="fa-solid fa-faucet-drip"></i></div>
+      <h3 class="profession-name">التأسيسات الصحية</h3>
+      <p class="profession-desc">شبكات مياه ومضخات</p>
+    </a>
+    <a href="/profession/mason/" class="profession-card">
+      <div class="profession-icon"><i class="fa-solid fa-trowel-bricks"></i></div>
+      <h3 class="profession-name">البناء والترميم</h3>
+      <p class="profession-desc">طابوق وبلوك</p>
+    </a>
+    <a href="/profession/painter/" class="profession-card">
+      <div class="profession-icon"><i class="fa-solid fa-paint-roller"></i></div>
+      <h3 class="profession-name">الدهانات والديكور</h3>
+      <p class="profession-desc">صبغ وورق جدران</p>
+    </a>
+    <a href="/profession/carpenter/" class="profession-card">
+      <div class="profession-icon"><i class="fa-solid fa-hammer"></i></div>
+      <h3 class="profession-name">أعمال النجارة</h3>
+      <p class="profession-desc">أبواب وأثاث</p>
+    </a>
+    <a href="/profession/hvac/" class="profession-card">
+      <div class="profession-icon"><i class="fa-solid fa-snowflake"></i></div>
+      <h3 class="profession-name">التبريد والتكييف</h3>
+      <p class="profession-desc">سبلت ومكيفات</p>
+    </a>
+    <a href="/profession/tile_mason/" class="profession-card">
+      <div class="profession-icon"><i class="fa-solid fa-cubes"></i></div>
+      <h3 class="profession-name">السيراميك والمرمر</h3>
+      <p class="profession-desc">أرضيات سيراميك</p>
+    </a>
+    <a href="/profession/developer/" class="profession-card">
+      <div class="profession-icon"><i class="fa-solid fa-code"></i></div>
+      <h3 class="profession-name">البرمجة والتقنية</h3>
+      <p class="profession-desc">تطبيقات ومواقع</p>
+    </a>
+    <a href="/profession/engineer/" class="profession-card">
+      <div class="profession-icon"><i class="fa-solid fa-compass-drafting"></i></div>
+      <h3 class="profession-name">الاستشارات الهندسية</h3>
+      <p class="profession-desc">تصميم وإشراف</p>
+    </a>
+    <a href="/profession/security_tech/" class="profession-card">
+      <div class="profession-icon"><i class="fa-solid fa-video"></i></div>
+      <h3 class="profession-name">الأنظمة الأمنية</h3>
+      <p class="profession-desc">كاميرات وإنذار</p>
+    </a>
+  </div>
+</main>
+
+<!-- ═══ الشريط السفلي ═══ -->
+<nav class="bottom-tab-bar">
+  <a href="/profileuser/" class="tab-item"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+  <a href="/service-requests/" class="tab-item active"><i class="fa-solid fa-briefcase"></i><span>دليل المهن</span></a>
+  <a href="/create-request/" class="tab-item"><i class="fa-solid fa-plus-circle"></i><span>طلب جديد</span></a>
+  <a href="/create-request/?tab=tracking" class="tab-item"><i class="fa-solid fa-list-check"></i><span>طلباتي</span></a>
+  <a href="/chat/" class="tab-item"><i class="fa-solid fa-envelope"></i><span>الرسائل</span></a>
+  <a href="/settings/" class="tab-item"><i class="fa-solid fa-user"></i><span>حسابي</span></a>
+</nav>
+
+<script>
+(function () {
+  // توجيه رابط الحساب حسب الدور
+  const role = localStorage.getItem('enjaz_user_role');
+  const profileLink = document.getElementById('nav-profile-link');
+  if (role === 'agent') profileLink.href = '/profile-mhn/';
+
+  // تحديث شريط الموقع
+  const locationEnabled = localStorage.getItem('location_enabled') === 'true';
+  const locationChip = document.getElementById('location-chip');
+  const locationText = document.getElementById('location-text');
+  const getLocationBtn = document.getElementById('get-location-btn');
+
+  if (locationEnabled) {
+    locationChip.classList.remove('inactive');
+    getLocationBtn.style.display = 'none';
+  } else {
+    locationChip.classList.add('inactive');
+    locationText.textContent = 'الموقع غير محدد';
+  }
+
+  // البحث
+  const professionMap = {
+    'محامي': 'lawyer', 'محام': 'lawyer', 'قانون': 'lawyer',
+    'كهربائي': 'electrician', 'كهرباء': 'electrician',
+    'سباك': 'plumber', 'تأسيسات': 'plumber', 'مياه': 'plumber',
+    'حداد': 'blacksmith', 'حدادة': 'blacksmith',
+    'بناء': 'mason', 'بناي': 'mason', 'ترميم': 'mason',
+    'صباغ': 'painter', 'دهان': 'painter', 'ديكور': 'painter',
+    'نجار': 'carpenter', 'نجارة': 'carpenter',
+    'تبريد': 'hvac', 'تكييف': 'hvac', 'مكيف': 'hvac',
+    'سيراميك': 'tile_mason', 'مرمر': 'tile_mason', 'بورسلين': 'tile_mason',
+    'مبرمج': 'developer', 'برمجة': 'developer', 'تطبيق': 'developer',
+    'مهندس': 'engineer', 'هندسة': 'engineer',
+    'كاميرات': 'security_tech', 'أمني': 'security_tech', 'مراقبة': 'security_tech'
+  };
+
+  const input = document.getElementById('search-input');
+  const suggestions = document.getElementById('suggestions');
+
+  input.addEventListener('input', function () {
+    const q = this.value.trim().toLowerCase();
+    suggestions.innerHTML = '';
+    if (!q) { suggestions.classList.remove('show'); return; }
+    const matches = Object.keys(professionMap).filter(k => k.includes(q) || q.includes(k));
+    if (!matches.length) { suggestions.classList.remove('show'); return; }
+    matches.forEach(key => {
+      const a = document.createElement('a');
+      a.className = 'suggestion-item';
+      a.textContent = key;
+      a.href = '/profession/' + professionMap[key] + '/';
+      suggestions.appendChild(a);
+    });
+    suggestions.classList.add('show');
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const slug = professionMap[input.value.trim()];
+      if (slug) window.location.href = '/profession/' + slug + '/';
+      else suggestions.classList.add('show');
+    }
+  });
+
+  document.addEventListener('click', e => {
+    if (e.target !== input) suggestions.classList.remove('show');
+  });
+
+  // PWA Install
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('pwa-banner').classList.add('show');
+  });
+
+  document.getElementById('btn-install')?.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt = null;
+    }
+    document.getElementById('pwa-banner').classList.remove('show');
+  });
+
+  document.getElementById('btn-close-banner')?.addEventListener('click', () => {
+    document.getElementById('pwa-banner').classList.remove('show');
+  });
+
+  // تحديد الموقع
+  window.getLocationAndRedirect = function (href) {
+    const locationEnabled = localStorage.getItem('location_enabled') === 'true';
+    const userLat = localStorage.getItem('user_lat');
+    const userLon = localStorage.getItem('user_lon');
+
+    if (locationEnabled && userLat && userLon) {
+      const url = new URL(href, window.location.origin);
+      url.searchParams.set('lat', userLat);
+      url.searchParams.set('lon', userLon);
+      window.location.href = url.toString();
+    } else if (locationEnabled) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          localStorage.setItem('user_lat', lat);
+          localStorage.setItem('user_lon', lon);
+          const url = new URL(href, window.location.origin);
+          url.searchParams.set('lat', lat);
+          url.searchParams.set('lon', lon);
+          window.location.href = url.toString();
+        },
+        () => { window.location.href = href; }
+      );
+    } else {
+      window.location.href = href;
+    }
+  };
+
+  window.requestLocationAndReload = function () {
+    if (!navigator.geolocation) {
+      alert('المتصفح لا يدعم تحديد الموقع');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        localStorage.setItem('user_lat', lat);
+        localStorage.setItem('user_lon', lon);
+        localStorage.setItem('location_enabled', 'true');
+        locationChip.classList.remove('inactive');
+        locationText.textContent = 'مرتب حسب الأقرب إليك';
+        getLocationBtn.style.display = 'none';
+        window.location.reload();
+      },
+      () => { alert('فشل تحديد الموقع. تأكد من السماح للمتصفح.'); }
+    );
+  };
+
+  // ربط الروابط بالموقع
+  document.querySelectorAll('.profession-card').forEach(link => {
+    const originalHref = link.getAttribute('href');
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      getLocationAndRedirect(originalHref);
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,391 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>إنجاز – ملف {{ professional.name }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <style>
+    .page-container { max-width: 600px; margin: 0 auto; padding: 0 0 90px; }
+    
+    /* ═══ رأس الملف الشخصي ═══ */
+    .profile-hero {
+      background: linear-gradient(135deg, #f0fdfa, #e0f2fe);
+      padding: 24px 20px 0;
+      text-align: center;
+      position: relative;
+      border-bottom: 1px solid #ccfbf1;
+    }
+    
+    .profile-hero::before {
+      content: '';
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(13,148,136,0.08) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    
+    .profile-avatar-large {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0d9488, #0ea5e9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      overflow: hidden;
+      box-shadow: 0 0 0 6px rgba(13,148,136,0.12), 0 8px 24px rgba(13,148,136,0.2);
+      position: relative;
+      z-index: 1;
+    }
+    
+    .profile-avatar-large i {
+      font-size: 3rem;
+      color: white;
+    }
+    
+    .profile-avatar-large img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .profile-name {
+      font-size: 1.7rem;
+      font-weight: 900;
+      color: #0f172a;
+      margin: 0 0 10px;
+    }
+    
+    .profile-profession {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #0d9488, #0ea5e9);
+      color: white;
+      padding: 6px 20px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+    }
+    
+    .profile-bio {
+      background: white;
+      border-radius: 20px;
+      padding: 18px;
+      text-align: right;
+      line-height: 1.7;
+      color: #334155;
+      margin: 0 16px 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+      border: 1px solid #ccfbf1;
+      font-size: 0.92rem;
+    }
+    
+    /* ═══ معلومات سريعة ═══ */
+    .quick-info {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 0 16px;
+      margin-bottom: 16px;
+    }
+    
+    .quick-info-item {
+      background: white;
+      border-radius: 18px;
+      padding: 14px 10px;
+      text-align: center;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    
+    .quick-info-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 8px;
+      font-size: 1rem;
+    }
+    
+    .quick-info-icon.star { background: #fffbeb; color: #f59e0b; }
+    .quick-info-icon.location { background: #e0f2fe; color: #0ea5e9; }
+    .quick-info-icon.price { background: #dcfce7; color: #22c55e; }
+    
+    .quick-info-label { font-size: 0.7rem; color: #64748b; margin-bottom: 3px; }
+    .quick-info-value { font-size: 0.85rem; font-weight: 800; color: #0f172a; }
+    
+    /* ═══ معرض الأعمال ═══ */
+    .portfolio-section {
+      background: white;
+      margin: 0 16px 16px;
+      border-radius: 24px;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+    }
+    
+    .portfolio-title {
+      font-size: 1rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #0f172a;
+    }
+    
+    .portfolio-title i { color: #0d9488; }
+    
+    .portfolio-scroll {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .portfolio-scroll::-webkit-scrollbar { height: 4px; }
+    .portfolio-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 2px; }
+    .portfolio-scroll::-webkit-scrollbar-thumb { background: #0d9488; border-radius: 2px; }
+    
+    .portfolio-image-item {
+      flex-shrink: 0;
+      width: 140px;
+      height: 140px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #f1f5f9;
+      scroll-snap-align: start;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      position: relative;
+    }
+    
+    .portfolio-image-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+    
+    .portfolio-image-item:hover img { transform: scale(1.05); }
+    
+    .portfolio-caption-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.65));
+      color: white;
+      padding: 20px 8px 8px;
+      font-size: 0.7rem;
+      text-align: center;
+    }
+    
+    /* ═══ زر الطلب ═══ */
+    .action-area {
+      padding: 0 16px;
+    }
+    
+    .request-service-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #0d9488, #0ea5e9);
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: 40px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      cursor: pointer;
+      font-family: 'Tajawal', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(13,148,136,0.35);
+      transition: all 0.3s;
+    }
+    
+    .request-service-btn:hover {
+      box-shadow: 0 8px 28px rgba(13,148,136,0.45);
+      transform: translateY(-2px);
+    }
+    
+    .request-service-btn:active {
+      transform: scale(0.97);
+    }
+    
+    .contact-alts {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      padding: 0 4px 16px;
+    }
+    
+    .contact-alt-btn {
+      flex: 1;
+      background: white;
+      border: 2px solid #e2e8f0;
+      color: #64748b;
+      padding: 10px;
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-family: 'Tajawal', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.25s;
+      text-decoration: none;
+    }
+    
+    .contact-alt-btn:hover {
+      border-color: #25d366;
+      color: #25d366;
+      background: #f0fdf4;
+    }
+    
+    @media (max-width: 480px) {
+      .quick-info { grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-container">
+  <!-- ═══ زر العودة ═══ -->
+  <button class="back-btn" onclick="window.history.back()" style="margin:16px 16px 0;">
+    <i class="fa-solid fa-arrow-right"></i>
+    العودة
+  </button>
+
+  <!-- ═══ Hero ═══ -->
+  <div class="profile-hero">
+    <div class="profile-avatar-large">
+      {% if professional.avatar %}<img src="{{ professional.avatar }}" alt="{{ professional.name }}">{% else %}<i class="fa-regular fa-user"></i>{% endif %}
+    </div>
+    <h1 class="profile-name">{{ professional.name }}</h1>
+    <div class="profile-profession">
+      <i class="fa-solid fa-award"></i>
+      {{ professional.profession_display }}
+    </div>
+  </div>
+
+  <!-- ═══ النبذة ═══ -->
+  {% if professional.bio %}
+  <div class="profile-bio">
+    <i class="fa-solid fa-quote-right" style="color:#0d9488; margin-left:8px;"></i>
+    {{ professional.bio }}
+  </div>
+  {% endif %}
+
+  <!-- ═══ معلومات سريعة ═══ -->
+  <div class="quick-info">
+    <div class="quick-info-item">
+      <div class="quick-info-icon star"><i class="fa-solid fa-star"></i></div>
+      <div class="quick-info-label">التقييم</div>
+      <div class="quick-info-value">{{ professional.rating }} ({{ professional.reviews_count }} مراجعة)</div>
+    </div>
+    <div class="quick-info-item">
+      <div class="quick-info-icon location"><i class="fa-solid fa-location-dot"></i></div>
+      <div class="quick-info-label">المدينة</div>
+      <div class="quick-info-value">{{ professional.city|default:"غير محدد" }}</div>
+    </div>
+    <div class="quick-info-item">
+      <div class="quick-info-icon price"><i class="fa-solid fa-money-bill"></i></div>
+      <div class="quick-info-label">السعر</div>
+      <div class="quick-info-value">{% if professional.service_min_price %}{{ professional.service_min_price|floatformat:0 }}~{{ professional.service_max_price|floatformat:0 }}{% else %}حسب الاتفاق{% endif %}</div>
+    </div>
+  </div>
+
+  {% if professional.distance %}
+  <div style="margin:0 16px 12px; background:#e0f2fe; color:#0369a1; padding:10px 16px; border-radius:14px; font-size:0.85rem; font-weight:700; display:flex; align-items:center; gap:8px;">
+    <i class="fa-solid fa-route"></i>
+    المسافة: {{ professional.distance }} كم من موقعك
+  </div>
+  {% endif %}
+
+  <!-- ═══ معرض الأعمال ═══ -->
+  {% if professional.portfolio_images.all %}
+  <div class="portfolio-section">
+    <div class="portfolio-title">
+      <i class="fa-solid fa-images"></i>
+      معرض الإنجازات
+      <span style="font-size:0.75rem; color:#94a3b8; font-weight:400;">({{ professional.portfolio_images.all|length }} صورة)</span>
+    </div>
+    <div class="portfolio-scroll">
+      {% for img in professional.portfolio_images.all %}
+      <div class="portfolio-image-item">
+        <img src="{{ img.image.url }}" alt="{{ img.caption|default:'صورة إنجاز' }}">
+        {% if img.caption %}
+        <div class="portfolio-caption-overlay">{{ img.caption }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ═══ زر الطلب ═══ -->
+  <div class="action-area">
+    <button class="request-service-btn" onclick="requestService()">
+      <i class="fa-solid fa-paper-plane"></i>
+      طلب الخدمة الآن
+    </button>
+    
+    <div class="contact-alts">
+      {% if professional.phone_number %}
+      <a href="tel:{{ professional.phone_number }}" class="contact-alt-btn">
+        <i class="fa-solid fa-phone"></i>
+        اتصال
+      </a>
+      <a href="https://wa.me/{{ professional.whatsapp_number }}" target="_blank" class="contact-alt-btn whatsapp">
+        <i class="fab fa-whatsapp"></i>
+        واتساب
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ═══ الشريط السفلي ═══ -->
+<nav class="bottom-tab-bar">
+  <a href="/profileuser/" class="tab-item"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+  <a href="/service-requests/" class="tab-item"><i class="fa-solid fa-briefcase"></i><span>دليل المهن</span></a>
+  <a href="/create-request/" class="tab-item"><i class="fa-solid fa-plus-circle"></i><span>طلب جديد</span></a>
+  <a href="/create-request/?tab=tracking" class="tab-item"><i class="fa-solid fa-list-check"></i><span>طلباتي</span></a>
+  <a href="/chat/" class="tab-item"><i class="fa-solid fa-envelope"></i><span>الرسائل</span></a>
+  <a href="/settings/" class="tab-item"><i class="fa-solid fa-user"></i><span>حسابي</span></a>
+</nav>
+
+<script>
+  const proId = {{ professional.id }};
+  const proName = "{{ professional.name|escapejs }}";
+
+  function requestService() {
+    const token = localStorage.getItem('enjaz_pwa_token');
+    if (!token) {
+      if (confirm('يجب تسجيل الدخول أولاً. هل تريد الانتقال لصفحة الدخول؟')) {
+        window.location.href = '/singin/';
+      }
+      return;
+    }
+    window.location.href = '/create-request/?pro_id=' + proId + '&pro_name=' + encodeURIComponent(proName);
+  }
+</script>
+</body>
+</html>

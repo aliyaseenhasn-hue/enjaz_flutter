@@ -1,0 +1,461 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنجاز - الإشعارات</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 24px 20px;
+            border-radius: 0 0 28px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .header-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        
+        .header-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .unread-count {
+            background: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: var(--radius-full);
+            margin-right: 8px;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 8px;
+            padding: 16px;
+            overflow-x: auto;
+        }
+        
+        .filter-chip {
+            padding: 8px 16px;
+            border-radius: var(--radius-full);
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: var(--transition);
+            font-family: var(--font);
+        }
+        
+        .filter-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .notifications-list {
+            padding: 0 16px 100px;
+        }
+        
+        .notification-group {
+            margin-bottom: 20px;
+        }
+        
+        .group-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .notification-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .notification-card:hover {
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-sm);
+            transform: translateX(-2px);
+        }
+        
+        .notification-card.unread {
+            border-right: 4px solid var(--primary);
+            background: var(--primary-muted);
+        }
+        
+        .notification-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+        }
+        
+        .notification-icon.request {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        
+        .notification-icon.message {
+            background: var(--sky-light);
+            color: var(--sky);
+        }
+        
+        .notification-icon.rating {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+        
+        .notification-icon.system {
+            background: var(--bg-gray);
+            color: var(--text-muted);
+        }
+        
+        .notification-icon.success {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+        
+        .notification-content {
+            flex: 1;
+        }
+        
+        .notification-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .notification-body {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        
+        .notification-time {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .unread-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+            position: absolute;
+            top: 16px;
+            left: 16px;
+        }
+        
+        .notification-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-light);
+        }
+        
+        .notif-action-btn {
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            font-family: var(--font);
+        }
+        
+        .notif-action-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .notif-action-btn.secondary {
+            background: var(--bg-gray);
+            color: var(--text-muted);
+        }
+        
+        .mark-all-btn {
+            text-align: center;
+            padding: 16px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .settings-section {
+            padding: 20px 16px;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            margin: 0 16px 16px;
+            border: 1px solid var(--border);
+        }
+        
+        .settings-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        
+        .setting-info h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .setting-info p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .toggle-switch {
+            width: 50px;
+            height: 28px;
+            background: var(--border);
+            border-radius: 999px;
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .toggle-switch.active {
+            background: var(--primary);
+        }
+        
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            right: 3px;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .toggle-switch.active::after {
+            right: 25px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1>
+        <i class="fa-solid fa-bell"></i>
+        الإشعارات
+        <span class="unread-count" id="unreadCount">5</span>
+    </h1>
+    <div class="header-actions">
+        <button class="header-btn" onclick="markAllRead()" title="تحديد الكل كمقروء">
+            <i class="fa-solid fa-check-double"></i>
+        </button>
+        <button class="header-btn" onclick="clearAll()" title="مسح الكل">
+            <i class="fa-solid fa-trash"></i>
+        </button>
+    </div>
+</div>
+
+<div class="filters">
+    <button class="filter-chip active" data-filter="all">الكل</button>
+    <button class="filter-chip" data-filter="requests">طلبات</button>
+    <button class="filter-chip" data-filter="messages">رسائل</button>
+    <button class="filter-chip" data-filter="ratings">تقييمات</button>
+    <button class="filter-chip" data-filter="system">نظام</button>
+</div>
+
+<div id="notificationsList" class="notifications-list">
+    <!-- سيتم تحميل الإشعارات ديناميكياً -->
+</div>
+
+<div class="settings-section">
+    <div class="settings-title">
+        <i class="fa-solid fa-gear" style="color: var(--primary);"></i>
+        إعدادات التنبيه
+    </div>
+    
+    <div class="setting-item">
+        <div class="setting-info">
+            <h4>إشعارات الطلبات الجديدة</h4>
+            <p>تنبيه عند وصول طلب جديد</p>
+        </div>
+        <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+    </div>
+    
+    <div class="setting-item">
+        <div class="setting-info">
+            <h4>إشعارات الرسائل</h4>
+            <p>تنبيه عند استلام رسالة جديدة</p>
+        </div>
+        <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+    </div>
+    
+    <div class="setting-item">
+        <div class="setting-info">
+            <h4>إشعارات التقييمات</h4>
+            <p>تنبيه عند استلام تقييم جديد</p>
+        </div>
+        <div class="toggle-switch active" onclick="toggleSetting(this)"></div>
+    </div>
+    
+    <div class="setting-item">
+        <div class="setting-info">
+            <h4>الأصوات</h4>
+            <p>تشغيل صوت التنبيه</p>
+        </div>
+        <div class="toggle-switch" onclick="toggleSetting(this)"></div>
+    </div>
+</div>
+
+<nav class="bottom-tab-bar">
+    <a href="/profileuser/" class="tab-item"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+    <a href="/service-requests/" class="tab-item"><i class="fa-solid fa-briefcase"></i><span>دليل المهن</span></a>
+    <a href="/create-request/" class="tab-item"><i class="fa-solid fa-plus-circle"></i><span>طلب جديد</span></a>
+    <a href="/create-request/?tab=tracking" class="tab-item"><i class="fa-solid fa-list-check"></i><span>طلباتي</span></a>
+    <a href="/chat/" class="tab-item"><i class="fa-solid fa-envelope"></i><span>الرسائل</span></a>
+    <a href="/settings/" class="tab-item"><i class="fa-solid fa-gear"></i><span>حسابي</span></a>
+</nav>
+
+<script>
+(function() {
+  const token = localStorage.getItem('enjaz_pwa_token');
+  if (!token) { window.location.replace('/singin/'); return; }
+  let allNotifs = [], currentFilter = 'all';
+
+  function escapeHtml(s) { return s ? s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : ''; }
+  function timeAgo(d) {
+    if (!d) return '';
+    const diff = (Date.now() - new Date(d)) / 1000;
+    if (diff < 3600) return `منذ ${Math.max(1, Math.round(diff/60))} دقيقة`;
+    if (diff < 86400) return `منذ ${Math.round(diff/3600)} ساعة`;
+    return `منذ ${Math.round(diff/86400)} يوم`;
+  }
+
+  async function loadNotifications() {
+    try {
+      const res = await fetch('/api/notifications/', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) throw new Error();
+      allNotifs = await res.json();
+      render();
+    } catch (e) {
+      document.getElementById('notificationsList').innerHTML = `<div class="empty-state"><i class="fa-solid fa-bell-slash"></i><h3>فشل تحميل الإشعارات</h3></div>`;
+    }
+  }
+
+  function render() {
+    const container = document.getElementById('notificationsList');
+    const filtered = currentFilter === 'all' ? allNotifs : allNotifs.filter(n => !n.is_read);
+    const unread = allNotifs.filter(n => !n.is_read).length;
+    document.getElementById('unreadCount').textContent = unread;
+    document.getElementById('unreadCount').style.display = unread > 0 ? 'inline' : 'none';
+    if (!filtered.length) {
+      container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-bell-slash"></i><h3>لا توجد إشعارات</h3></div>`;
+      return;
+    }
+    container.innerHTML = filtered.map(n => `
+      <div class="notification-card ${n.is_read ? '' : 'unread'}" onclick="openNotification(${n.request || 'null'})">
+        ${!n.is_read ? '<div class="unread-dot"></div>' : ''}
+        <div class="notification-icon request"><i class="fa-solid fa-bell"></i></div>
+        <div class="notification-content">
+          <div class="notification-title">${escapeHtml(n.title)}</div>
+          <div class="notification-body">${escapeHtml(n.body)}</div>
+          <div class="notification-time"><i class="fa-solid fa-clock-rotate-left"></i> ${timeAgo(n.created_at)}</div>
+          ${n.request ? `<div class="notification-actions"><button class="notif-action-btn primary" onclick="event.stopPropagation(); window.location.href='/request-details/${n.request}/'">عرض التفاصيل</button></div>` : ''}
+        </div>
+      </div>`).join('');
+  }
+
+  window.openNotification = function(requestId) { if (requestId) window.location.href = `/request-details/${requestId}/`; };
+
+  document.querySelectorAll('.filter-chip').forEach(chip => chip.addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentFilter = chip.dataset.filter === 'unread' ? 'unread' : 'all';
+    render();
+  }));
+
+  loadNotifications();
+})();
+
+</script>
+
+</body>
+</html>

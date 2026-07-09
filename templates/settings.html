@@ -1,0 +1,566 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>إنجاز – الإعدادات</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <style>
+    /* جميع الأنماط كما هي دون تغيير */
+    .page-container { max-width: 600px; margin: 0 auto; padding: 0 16px 100px; }
+    .card { background: white; border-radius: 28px; padding: 24px 20px; margin-bottom: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+    .card-title { font-size: 1rem; font-weight: 800; color: #0f172a; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    .card-title i { color: #0d9488; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 7px; }
+    .form-control { width: 100%; padding: 13px 16px; border: 2px solid #e2e8f0; border-radius: 16px; font-family: 'Tajawal', sans-serif; font-size: 14px; background: #f8fffe; color: #0f172a; outline: none; transition: all 0.25s; direction: rtl; }
+    .form-control:focus { border-color: #0d9488; background: white; box-shadow: 0 0 0 4px rgba(13,148,136,0.1); }
+    .form-control::placeholder { color: #94a3b8; }
+    select.form-control { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 14px center; background-size: 18px; padding-left: 44px; cursor: pointer; }
+    textarea.form-control { resize: none; min-height: 100px; padding: 14px; line-height: 1.6; }
+    .char-count { font-size: 11px; color: #94a3b8; margin-top: 4px; text-align: left; }
+    .avatar-section { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9; }
+    .avatar-wrapper { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+    .avatar-circle { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, #f0fdfa, #e0f2fe); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #0d9488; overflow: hidden; border: 3px solid #0d9488; box-shadow: 0 0 0 4px rgba(13,148,136,0.1); }
+    .avatar-circle img { width: 100%; height: 100%; object-fit: cover; display: none; }
+    .avatar-camera { position: absolute; bottom: 0; left: 0; width: 26px; height: 26px; background: #0d9488; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; cursor: pointer; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+    .avatar-name { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+    .avatar-role { font-size: 0.78rem; font-weight: 700; color: #0d9488; display: inline-block; background: #f0fdfa; padding: 3px 12px; border-radius: 20px; }
+    .phone-row { display: flex; gap: 8px; align-items: center; }
+    .phone-row .form-control { flex: 1; direction: ltr; text-align: right; background: #f1f5f9; color: #0f172a; cursor: default; font-weight: 700; letter-spacing: 0.5px; }
+    .phone-row .form-control.no-number { color: #94a3b8; font-weight: 400; }
+    .phone-row .form-control.editable { background: white; color: #0f172a; border-color: #0d9488; box-shadow: 0 0 0 4px rgba(13,148,136,0.1); cursor: text; font-weight: 700; }
+    .phone-verified-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: #16a34a; font-weight: 700; margin-top: 5px; }
+    .phone-verified-badge.hidden { display: none; }
+    .phone-btn { flex-shrink: 0; background: #f0fdfa; color: #0d9488; border: 1px solid #ccfbf1; border-radius: 14px; padding: 11px 14px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Tajawal', sans-serif; transition: all 0.2s; white-space: nowrap; }
+    .phone-btn:hover { background: #0d9488; color: white; }
+    .phone-btn.saving { background: #0d9488; color: white; }
+    .field-hint { font-size: 11px; margin-top: 5px; display: none; }
+    .field-hint.show { display: block; }
+    .field-hint.info { color: #64748b; }
+    .field-hint.ok { color: #16a34a; }
+    .field-hint.err { color: #dc2626; }
+    .password-trigger { width: 100%; display: flex; align-items: center; justify-content: space-between; background: #f8fffe; border: 2px solid #e2e8f0; border-radius: 16px; padding: 14px 16px; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 14px; font-weight: 700; color: #0f172a; transition: all 0.2s; margin-bottom: 0; }
+    .password-trigger:hover { border-color: #0d9488; color: #0d9488; }
+    .password-trigger .trigger-icon { font-size: 14px; transition: transform 0.3s; color: #0d9488; }
+    .password-trigger.open .trigger-icon { transform: rotate(180deg); }
+    .password-body { display: none; margin-top: 14px; }
+    .password-body.open { display: block; }
+    .save-btn { width: 100%; background: linear-gradient(135deg, #0d9488, #0ea5e9); color: white; border: none; padding: 14px; border-radius: 40px; font-weight: 800; font-size: 15px; cursor: pointer; font-family: 'Tajawal', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 16px rgba(13,148,136,0.3); transition: all 0.3s; }
+    .save-btn:hover { box-shadow: 0 6px 20px rgba(13,148,136,0.4); transform: translateY(-1px); }
+    .save-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .logout-btn { width: 100%; background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; padding: 13px; border-radius: 40px; font-weight: 800; font-size: 14px; cursor: pointer; font-family: 'Tajawal', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; margin-top: 8px; }
+    .logout-btn:hover { background: #e2e8f0; color: #0f172a; }
+    .danger-btn { width: 100%; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 13px; border-radius: 40px; font-weight: 800; font-size: 14px; cursor: pointer; font-family: 'Tajawal', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; margin-top: 8px; }
+    .danger-btn:hover { background: #fecaca; }
+    .msg { padding: 12px 16px; border-radius: 14px; font-size: 13px; font-weight: 700; text-align: center; margin-bottom: 16px; display: none; }
+    .msg.success { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; display: block; }
+    .msg.error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; display: block; }
+    .warning-msg { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; padding: 12px; border-radius: 16px; font-size: 13px; margin-bottom: 16px; display: none; align-items: center; gap: 8px; }
+    .warning-msg.show { display: flex; }
+  </style>
+</head>
+<body>
+
+<div class="page-container">
+  <!-- رأس الصفحة -->
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0;">
+    <button class="back-btn" id="backBtn" style="margin:0;">
+      <i class="fa-solid fa-arrow-right"></i> رجوع
+    </button>
+    <div style="font-size:1.2rem; font-weight:800; color:#0f172a;">
+      <i class="fa-solid fa-gear" style="color:#0d9488; margin-left:6px;"></i> الإعدادات
+    </div>
+    <div style="width:80px;"></div>
+  </div>
+
+  <!-- الملف الشخصي -->
+  <div class="card">
+    <div class="card-title"><i class="fa-solid fa-user"></i> الملف الشخصي</div>
+
+    <div class="avatar-section">
+      <div class="avatar-wrapper">
+        <div class="avatar-circle" id="avatarCircle">
+          <i class="fa-regular fa-user" id="avatarIcon"></i>
+          <img id="avatarImg">
+        </div>
+        <label class="avatar-camera" for="avatarInput"><i class="fa-solid fa-camera"></i></label>
+        <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+      </div>
+      <div>
+        <div class="avatar-name" id="avatarName">جاري التحميل...</div>
+        <span class="avatar-role" id="avatarRole">—</span>
+      </div>
+    </div>
+
+    <div id="profileMsg" class="msg"></div>
+    <div id="phoneWarningMsg" class="warning-msg">
+      <i class="fa-solid fa-exclamation-triangle"></i>
+      <span>رقم هاتفك الحالي وهمي. يرجى تحديثه برقم حقيقي لإتمام الخدمات.</span>
+    </div>
+
+    <div class="field">
+      <label><i class="fa-solid fa-phone" style="color:#0d9488; margin-left:6px;"></i>رقم الهاتف</label>
+      <div class="phone-row">
+        <input class="form-control no-number" type="tel" id="phoneInput" placeholder="لا يوجد رقم مسجّل" readonly>
+        <button class="phone-btn" id="phoneBtn" type="button">✏️ تعديل</button>
+      </div>
+      <div class="phone-verified-badge hidden" id="phoneBadge">
+        <i class="fa-solid fa-circle-check"></i> رقم مسجّل
+      </div>
+      <div class="field-hint info" id="phoneHint">أدخل الرقم الجديد ثم اضغط حفظ</div>
+    </div>
+
+    <div class="field">
+      <label><i class="fa-solid fa-user" style="color:#0d9488; margin-left:6px;"></i>الاسم الكامل</label>
+      <input class="form-control" type="text" id="fullname" placeholder="الاسم الثلاثي">
+    </div>
+    
+    <div class="field">
+      <label><i class="fa-solid fa-envelope" style="color:#0d9488; margin-left:6px;"></i>البريد الإلكتروني</label>
+      <input class="form-control" type="email" id="email" placeholder="example@domain.com">
+    </div>
+
+    <div class="field">
+      <label><i class="fa-solid fa-pen" style="color:#0d9488; margin-left:6px;"></i>نبذة عن خدماتك</label>
+      <textarea class="form-control" id="bio" rows="3" placeholder="اكتب نبذة عن خبراتك..." maxlength="300"></textarea>
+      <div class="char-count"><span id="charCount">0</span> / 300</div>
+    </div>
+
+    <div class="field" id="professionField" style="display:none;">
+      <label><i class="fa-solid fa-briefcase" style="color:#0d9488; margin-left:6px;"></i>المهنة</label>
+      <select class="form-control" id="professionSelect">
+        <option value="lawyer">⚖️ محامٍ</option>
+        <option value="electrician">🔌 كهربائي</option>
+        <option value="plumber">🚰 سباك</option>
+        <option value="mason">🧱 بناء</option>
+        <option value="painter">🎨 دهانات</option>
+        <option value="carpenter">🪚 نجار</option>
+        <option value="hvac">❄️ تكييف</option>
+        <option value="tile_mason">🪞 سيراميك</option>
+        <option value="developer">💻 مبرمج</option>
+        <option value="engineer">📐 مهندس</option>
+        <option value="security_tech">📷 كاميرات</option>
+        <option value="clearance_agent">📄 معقب</option>
+        <option value="accountant">🧾 محاسب</option>
+        <option value="other">🔄 أخرى</option>
+      </select>
+      <div id="customProfField" style="display:none; margin-top:10px;">
+        <input class="form-control" type="text" id="customProfInput" placeholder="اكتب مهنتك">
+      </div>
+    </div>
+
+    <button class="save-btn" id="saveProfileBtn">
+      <i class="fa-solid fa-check"></i> حفظ الملف الشخصي
+    </button>
+  </div>
+
+  <!-- الموقع (للمهنيين) -->
+  <div class="card" id="agentLocationCard" style="display:none;">
+    <div class="card-title"><i class="fa-solid fa-map-pin"></i> موقعي المهني</div>
+    <p style="font-size:13px; color:#94a3b8; margin-bottom:14px;">موقعك يُستخدم لإظهارك للعملاء القريبين منك.</p>
+    <button class="locate-btn" id="locateBtn">
+      <i class="fa-solid fa-location-crosshairs"></i> تحديث موقعي الآن
+    </button>
+    <div class="locate-status" id="locateStatus"></div>
+  </div>
+
+  <!-- الأمان -->
+  <div class="card">
+    <div class="card-title"><i class="fa-solid fa-shield-halved"></i> الأمان</div>
+    <button class="password-trigger" id="passwordTrigger" type="button">
+      <span><i class="fa-solid fa-lock" style="color:#0d9488; margin-left:8px;"></i> تغيير كلمة المرور</span>
+      <i class="fa-solid fa-chevron-down trigger-icon"></i>
+    </button>
+    <div class="password-body" id="passwordBody">
+      <div id="securityMsg" class="msg" style="margin-top:0;"></div>
+      <div class="field" style="margin-top:4px;">
+        <label>كلمة المرور الحالية</label>
+        <input class="form-control" type="password" id="oldPassword" placeholder="أدخل كلمة المرور الحالية">
+      </div>
+      <div class="field">
+        <label>كلمة المرور الجديدة</label>
+        <input class="form-control" type="password" id="newPassword" placeholder="6 أحرف على الأقل">
+      </div>
+      <button class="save-btn" id="savePasswordBtn">
+        <i class="fa-solid fa-key"></i> تأكيد التغيير
+      </button>
+    </div>
+  </div>
+
+  <!-- إجراءات الحساب -->
+  <div class="card">
+    <div class="card-title"><i class="fa-solid fa-triangle-exclamation"></i> إجراءات الحساب</div>
+    <button class="logout-btn" id="logoutBtn">
+      <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
+    </button>
+    <button class="danger-btn" id="deleteBtn">
+      <i class="fa-solid fa-trash"></i> حذف الحساب نهائياً
+    </button>
+  </div>
+</div>
+
+<nav class="bottom-tab-bar">
+  <a href="/profile-mhn/" class="tab-item" id="homeTab"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+  <a href="/create-request/?tab=tracking" class="tab-item"><i class="fa-solid fa-list-check"></i><span>طلباتي</span></a>
+  <a href="/chat/" class="tab-item"><i class="fa-solid fa-envelope"></i><span>الرسائل</span></a>
+  <a href="/settings/" class="tab-item active"><i class="fa-solid fa-gear"></i><span>حسابي</span></a>
+</nav>
+
+<script>
+(function () {
+  const token = localStorage.getItem('enjaz_pwa_token');
+  if (!token) { window.location.replace('/singin/'); return; }
+
+  let currentRole = null;
+  let savedCustomProfession = '';
+
+  function showMsg(id, type, text) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'msg ' + type;
+    el.textContent = text;
+    if (type === 'success') setTimeout(() => { el.className = 'msg'; el.textContent = ''; }, 4000);
+  }
+
+  // عداد الحروف
+  const bioEl = document.getElementById('bio');
+  const charCount = document.getElementById('charCount');
+  bioEl.addEventListener('input', () => { charCount.textContent = bioEl.value.length; });
+
+  // رقم الهاتف
+  const phoneInput = document.getElementById('phoneInput');
+  const phoneBtn   = document.getElementById('phoneBtn');
+  const phoneHint  = document.getElementById('phoneHint');
+  const phoneBadge = document.getElementById('phoneBadge');
+  const phoneWarningMsg = document.getElementById('phoneWarningMsg');
+  let phoneEditing = false;
+
+  function setPhoneDisplay(number, needsCompletion) {
+    if (number && number !== 'null' && number !== 'غير متاح' && !needsCompletion) {
+      phoneInput.value = number;
+      phoneInput.classList.remove('no-number');
+      phoneBadge.classList.remove('hidden');
+      phoneWarningMsg.classList.remove('show');
+    } else {
+      phoneInput.value = '';
+      phoneInput.placeholder = 'لا يوجد رقم حقيقي — أضف رقمك';
+      phoneInput.classList.add('no-number');
+      phoneBadge.classList.add('hidden');
+      if (needsCompletion) phoneWarningMsg.classList.add('show');
+      else phoneWarningMsg.classList.remove('show');
+    }
+  }
+
+  phoneBtn.addEventListener('click', async () => {
+    if (!phoneEditing) {
+      phoneEditing = true;
+      phoneInput.readOnly = false;
+      phoneInput.classList.add('editable');
+      phoneInput.classList.remove('no-number');
+      phoneInput.focus();
+      phoneInput.select();
+      phoneBtn.innerHTML = '💾 حفظ';
+      phoneBtn.classList.add('saving');
+      phoneHint.textContent = 'أدخل الرقم الجديد ثم اضغط حفظ';
+      phoneHint.className = 'field-hint show info';
+      phoneBadge.classList.add('hidden');
+      phoneWarningMsg.classList.remove('show');
+    } else {
+      const val = phoneInput.value.trim();
+      if (!val || !val.match(/^07[3456789]\d{8}$/)) {
+        phoneHint.textContent = '❌ رقم غير صحيح (مثال: 07712345678)';
+        phoneHint.className = 'field-hint show err';
+        return;
+      }
+      phoneBtn.innerHTML = '⏳';
+      phoneBtn.disabled = true;
+      try {
+        const res = await fetch('/api/auth/profile/', {
+          method: 'PATCH',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone_number: val })
+        });
+        if (res.ok) {
+          phoneHint.textContent = '✅ تم تحديث الرقم بنجاح! سيتم إعادة تحميل الصفحة.';
+          phoneHint.className = 'field-hint show ok';
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          const err = await res.json();
+          phoneHint.textContent = '❌ ' + (err.detail || err.phone_number?.[0] || 'فشل الحفظ');
+          phoneHint.className = 'field-hint show err';
+          phoneBtn.innerHTML = '💾 حفظ';
+          phoneBtn.disabled = false;
+          phoneEditing = false;
+        }
+      } catch (e) {
+        phoneHint.textContent = '❌ فشل الاتصال';
+        phoneHint.className = 'field-hint show err';
+        phoneBtn.innerHTML = '💾 حفظ';
+        phoneBtn.disabled = false;
+        phoneEditing = false;
+      }
+    }
+  });
+
+  // Accordion كلمة المرور
+  const passwordTrigger = document.getElementById('passwordTrigger');
+  const passwordBody = document.getElementById('passwordBody');
+  passwordTrigger.addEventListener('click', () => {
+    const isOpen = passwordBody.classList.toggle('open');
+    passwordTrigger.classList.toggle('open', isOpen);
+  });
+
+  // الصورة
+  const avatarImg = document.getElementById('avatarImg');
+  const avatarIcon = document.getElementById('avatarIcon');
+  const avatarInput = document.getElementById('avatarInput');
+  avatarInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      avatarImg.src = ev.target.result;
+      avatarImg.style.display = 'block';
+      avatarIcon.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+    try {
+      const fd = new FormData();
+      fd.append('avatar', file);
+      const res = await fetch('/api/auth/profile/', { method: 'PUT', headers: { 'Authorization': `Bearer ${token}` }, body: fd });
+      if (res.ok) showMsg('profileMsg', 'success', '✅ تم تحديث الصورة');
+      else showMsg('profileMsg', 'error', '❌ فشل رفع الصورة');
+    } catch (e) { showMsg('profileMsg', 'error', '❌ خطأ'); }
+  });
+
+  // المهنة
+  const professionSelect = document.getElementById('professionSelect');
+  const customProfField = document.getElementById('customProfField');
+  const customProfInput = document.getElementById('customProfInput');
+  professionSelect.addEventListener('change', function () {
+    customProfField.style.display = this.value === 'other' ? 'block' : 'none';
+  });
+
+  // تحميل البيانات
+  async function loadProfile() {
+    try {
+      const res = await fetch('/api/auth/profile/?t=' + Date.now(), { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.status === 401) { localStorage.clear(); window.location.replace('/singin/'); return; }
+      if (!res.ok) return;
+      const data = await res.json();
+      currentRole = data.role;
+      const isAgent = currentRole === 'agent';
+      const needsCompletion = data.needs_phone_completion === true;
+
+      document.getElementById('fullname').value = data.full_name || '';
+      document.getElementById('email').value = data.email || '';
+      setPhoneDisplay(data.phone_number, needsCompletion);
+      document.getElementById('avatarName').textContent = data.full_name || 'المستخدم';
+      document.getElementById('avatarRole').textContent = isAgent ? 'مقدم خدمة' : 'طالب خدمة';
+
+      const bio = data.agent_profile?.bio || data.bio || '';
+      bioEl.value = bio;
+      charCount.textContent = bio.length;
+
+      const avatarUrl = data.avatar_url || data.avatar;
+      if (avatarUrl && avatarUrl !== 'null') {
+        const url = avatarUrl.startsWith('http') ? avatarUrl : window.location.origin + '/' + avatarUrl.replace(/^\/+/, '');
+        avatarImg.src = url + '?t=' + Date.now();
+        avatarImg.style.display = 'block';
+        avatarIcon.style.display = 'none';
+      }
+
+      document.getElementById('professionField').style.display = isAgent ? 'block' : 'none';
+      document.getElementById('agentLocationCard').style.display = isAgent ? 'block' : 'none';
+
+      document.getElementById('backBtn').onclick = () => {
+        window.location.href = isAgent ? '/profile-mhn/' : '/profileuser/';
+      };
+      document.getElementById('homeTab').href = isAgent ? '/profile-mhn/' : '/profileuser/';
+
+      if (isAgent && data.agent_profile) {
+        const ap = data.agent_profile;
+        savedCustomProfession = ap.custom_profession || '';
+        const matched = [...professionSelect.options].some(o => o.value === ap.profession);
+        if (ap.profession === 'other' || !matched) {
+          professionSelect.value = 'other';
+          customProfInput.value = ap.custom_profession || ap.profession || '';
+          customProfField.style.display = 'block';
+        } else {
+          professionSelect.value = ap.profession;
+        }
+        if (ap.city || ap.lat) {
+          const ls = document.getElementById('locateStatus');
+          if (ls) {
+            ls.className = 'locate-status show ok';
+            ls.textContent = `📍 موقعك: ${ap.city || ap.lat}`;
+          }
+        }
+      }
+    } catch (e) { console.warn(e); }
+  }
+
+  // حفظ الملف الشخصي (الاسم، البريد، السيرة)
+  document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+    const fullname = document.getElementById('fullname').value.trim();
+    const email = document.getElementById('email').value.trim();
+    if (!fullname) { showMsg('profileMsg', 'error', '❌ أدخل الاسم الكامل'); return; }
+    const btn = document.getElementById('saveProfileBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري الحفظ...';
+
+    try {
+      const parts = fullname.split(' ');
+      const payload = {
+        first_name: parts[0] || '',
+        last_name: parts.slice(1).join(' ') || '',
+        bio: bioEl.value.trim()
+      };
+      if (email) payload.email = email;
+
+      const res = await fetch('/api/auth/profile/', {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        showMsg('profileMsg', 'error', '❌ ' + (err.detail || 'فشل'));
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> حفظ الملف الشخصي';
+        return;
+      }
+      localStorage.setItem('enjaz_user_name', fullname);
+    } catch (e) {
+      showMsg('profileMsg', 'error', '❌ فشل');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> حفظ الملف الشخصي';
+      return;
+    }
+
+    if (currentRole === 'agent') {
+      const prof = professionSelect.value;
+      const customProf = customProfInput.value.trim();
+      if (prof === 'other' && !customProf) {
+        showMsg('profileMsg', 'error', '❌ اكتب مهنتك');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> حفظ الملف الشخصي';
+        return;
+      }
+      const payload = { profession: prof };
+      if (customProf) payload.custom_profession = customProf;
+      try {
+        await fetch('/api/auth/agent/profile/', {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) { console.warn(e); }
+    }
+
+    showMsg('profileMsg', 'success', '✅ تم الحفظ بنجاح');
+    document.getElementById('avatarName').textContent = document.getElementById('fullname').value;
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> حفظ الملف الشخصي';
+  });
+
+  // الموقع
+  async function reverseGeocode(lat, lon) {
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=ar`);
+      const d = await r.json();
+      return d.address?.city || d.address?.town || d.address?.village || 'غير محدد';
+    } catch (e) { return 'غير محدد'; }
+  }
+
+  const locateBtn = document.getElementById('locateBtn');
+  if (locateBtn) {
+    locateBtn.addEventListener('click', () => {
+      if (!navigator.geolocation) { alert('المتصفح لا يدعم الموقع'); return; }
+      const ls = document.getElementById('locateStatus');
+      ls.className = 'locate-status show load';
+      ls.textContent = '⏳ جاري التحديد...';
+      navigator.geolocation.getCurrentPosition(async pos => {
+        const lat = pos.coords.latitude, lon = pos.coords.longitude;
+        ls.textContent = '📍 تم، جاري الحفظ...';
+        const city = await reverseGeocode(lat, lon);
+        try {
+          const res = await fetch('/api/auth/agent/profile/', {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ city, lat, lon })
+          });
+          ls.className = 'locate-status show ' + (res.ok ? 'ok' : 'err');
+          ls.textContent = res.ok ? `✅ تم: ${city}` : '❌ فشل الحفظ';
+        } catch (e) {
+          ls.className = 'locate-status show err';
+          ls.textContent = '❌ فشل الاتصال';
+        }
+      }, err => {
+        ls.className = 'locate-status show err';
+        ls.textContent = '❌ ' + err.message;
+      }, { enableHighAccuracy: true, timeout: 12000 });
+    });
+  }
+
+  // كلمة المرور
+  document.getElementById('savePasswordBtn').addEventListener('click', async () => {
+    const oldPass = document.getElementById('oldPassword').value;
+    const newPass = document.getElementById('newPassword').value;
+    if (!oldPass) { showMsg('securityMsg', 'error', '❌ أدخل كلمة المرور الحالية'); return; }
+    if (!newPass || newPass.length < 6) { showMsg('securityMsg', 'error', '❌ 6 أحرف على الأقل'); return; }
+    const btn = document.getElementById('savePasswordBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري...';
+    try {
+      const res = await fetch('/api/auth/profile/change-password/', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ old_password: oldPass, new_password: newPass })
+      });
+      if (res.ok) {
+        showMsg('securityMsg', 'success', '✅ تم تغيير كلمة المرور');
+        document.getElementById('oldPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        setTimeout(() => {
+          passwordBody.classList.remove('open');
+          passwordTrigger.classList.remove('open');
+        }, 2000);
+      } else {
+        const err = await res.json();
+        showMsg('securityMsg', 'error', '❌ ' + (err.detail || 'كلمة المرور الحالية غير صحيحة'));
+      }
+    } catch (e) { showMsg('securityMsg', 'error', '❌ فشل'); }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-key"></i> تأكيد التغيير';
+  });
+
+  // الخروج والحذف
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    if (confirm('هل تريد تسجيل الخروج؟')) { localStorage.clear(); window.location.replace('/singin/'); }
+  });
+
+  document.getElementById('deleteBtn').addEventListener('click', async () => {
+    if (!confirm('⚠️ سيتم حذف حسابك نهائياً. هل أنت متأكد؟')) return;
+    const password = prompt('أدخل كلمة المرور لتأكيد الحذف:');
+    if (!password) return;
+    try {
+      const res = await fetch('/api/auth/profile/delete/', {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+      if (res.ok) { localStorage.clear(); window.location.replace('/singin/'); }
+      else { const e = await res.json(); alert('❌ ' + (e.detail || 'كلمة المرور غير صحيحة')); }
+    } catch (e) { alert('❌ فشل الاتصال'); }
+  });
+
+  loadProfile();
+})();
+</script>
+</body>
+</html>

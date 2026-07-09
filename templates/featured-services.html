@@ -1,0 +1,388 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنجاز - الخدمات المميزة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, var(--sky), var(--sky-dark));
+            color: white;
+            padding: 24px 20px;
+            border-radius: 0 0 28px 28px;
+        }
+        
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .page-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 8px;
+        }
+        
+        .featured-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+        }
+        
+        .guarantee-banner {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            margin: 16px;
+            padding: 20px;
+            border-radius: var(--radius-xl);
+            text-align: center;
+        }
+        
+        .guarantee-banner h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .guarantee-banner p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .guarantee-features {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            justify-content: center;
+        }
+        
+        .guarantee-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+        
+        .guarantee-item i {
+            font-size: 1.1rem;
+        }
+        
+        .featured-list {
+            padding: 0 16px 100px;
+        }
+        
+        .featured-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        
+        .featured-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        
+        .featured-card-header {
+            background: linear-gradient(135deg, var(--primary-muted), var(--sky-light));
+            padding: 20px;
+            position: relative;
+        }
+        
+        .featured-badge-top {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: var(--warning);
+            color: white;
+            padding: 6px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .featured-badge-top i {
+            font-size: 0.9rem;
+        }
+        
+        .featured-category {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+        
+        .featured-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .featured-agent {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        
+        .featured-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        
+        .featured-agent-info h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .featured-agent-info span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .featured-card-body {
+            padding: 20px;
+        }
+        
+        .featured-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+        
+        .featured-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 16px;
+            background: var(--bg-gray);
+            border-radius: var(--radius-lg);
+            margin-bottom: 16px;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .meta-item i {
+            color: var(--primary);
+        }
+        
+        .featured-price {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .price-info {
+            text-align: right;
+        }
+        
+        .price-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .price-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+        }
+        
+        .price-note {
+            font-size: 0.7rem;
+            color: var(--text-light);
+        }
+        
+        .featured-card-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .featured-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: var(--radius-lg);
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            font-family: var(--font);
+            text-align: center;
+            text-decoration: none;
+        }
+        
+        .featured-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .featured-btn.secondary {
+            background: var(--bg-gray);
+            color: var(--text-secondary);
+        }
+        
+        .featured-btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        .featured-btn.primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .trust-indicators {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-light);
+            flex-wrap: wrap;
+        }
+        
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--success);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--border);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1><i class="fa-solid fa-crown"></i> الخدمات المميزة</h1>
+    <p>خدمات مدعومة ومكفولة من إنجاز لضمان أفضل تجربة</p>
+    <div class="featured-badge">
+        <i class="fa-solid fa-shield-halved"></i>
+        ضمان 30 يوم
+    </div>
+</div>
+
+<div class="guarantee-banner">
+    <h3>🛡️ لماذا خدمات مميزة؟</h3>
+    <p>نخبة من المهنيين المعتمدين مع ضمان استرجاع كامل</p>
+    <div class="guarantee-features">
+        <div class="guarantee-item">
+            <i class="fa-solid fa-check-circle"></i>
+            <span>فحص أمني</span>
+        </div>
+        <div class="guarantee-item">
+            <i class="fa-solid fa-check-circle"></i>
+            <span>ضمان استرجاع</span>
+        </div>
+        <div class="guarantee-item">
+            <i class="fa-solid fa-check-circle"></i>
+            <span>دعم متواصل</span>
+        </div>
+    </div>
+</div>
+
+<div id="featuredList" class="featured-list">
+    <!-- سيتم تحميل الخدمات المميزة ديناميكياً -->
+</div>
+
+<nav class="bottom-tab-bar">
+    <a href="/profileuser/" class="tab-item"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+    <a href="/service-requests/" class="tab-item"><i class="fa-solid fa-briefcase"></i><span>دليل المهن</span></a>
+    <a href="/create-request/" class="tab-item"><i class="fa-solid fa-plus-circle"></i><span>طلب جديد</span></a>
+    <a href="/create-request/?tab=tracking" class="tab-item"><i class="fa-solid fa-list-check"></i><span>طلباتي</span></a>
+    <a href="/chat/" class="tab-item"><i class="fa-solid fa-envelope"></i><span>الرسائل</span></a>
+    <a href="/settings/" class="tab-item"><i class="fa-solid fa-gear"></i><span>حسابي</span></a>
+</nav>
+
+<script>
+(function() {
+  function escapeHtml(s) { return s ? s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : ''; }
+
+  async function loadFeatured() {
+    const container = document.getElementById('featuredList');
+    try {
+      const res = await fetch('/api/auth/featured-agents/');
+      if (!res.ok) throw new Error();
+      renderFeatured(await res.json());
+    } catch (e) {
+      container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-star"></i><h3>تعذر تحميل الخدمات المميزة</h3></div>`;
+    }
+  }
+
+  function renderFeatured(agents) {
+    const container = document.getElementById('featuredList');
+    if (!agents || !agents.length) {
+      container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-star"></i><h3>لا توجد خدمات مميزة حالياً</h3></div>`;
+      return;
+    }
+    container.innerHTML = agents.map(a => {
+      const priceText = a.service_min_price ? `${Number(a.service_min_price).toLocaleString()} - ${Number(a.service_max_price || a.service_min_price).toLocaleString()} د.ع` : 'حسب الاتفاق';
+      return `
+      <div class="featured-card">
+        <div class="featured-card-header">
+          <div class="featured-badge-top"><i class="fa-solid fa-crown"></i> VIP</div>
+          <div class="featured-category">${escapeHtml(a.profession_display || '')}</div>
+          <div class="featured-title">${escapeHtml(a.full_name || 'مهني معتمد')}</div>
+        </div>
+        <div class="featured-card-body">
+          <div class="featured-desc">${escapeHtml(a.bio || 'مهني معتمد من إنجاز بخبرة وتقييمات موثوقة.')}</div>
+          <div class="featured-meta">
+            <div class="meta-item"><i class="fa-solid fa-star"></i> ${a.rating || 0}</div>
+            <div class="meta-item"><i class="fa-solid fa-check-double"></i> ${a.total_jobs || 0} مشروع مكتمل</div>
+          </div>
+          <div class="featured-price"><div class="price-info"><div class="price-label">السعر</div><div class="price-value">${priceText}</div></div></div>
+          <div class="featured-card-actions">
+            <a href="/create-request/?pro_id=${a.id}&pro_name=${encodeURIComponent(a.full_name||'')}" class="featured-btn primary"><i class="fa-solid fa-plus"></i> اطلب الآن</a>
+            <a href="/professional-detail/${a.id}/" class="featured-btn secondary"><i class="fa-solid fa-eye"></i> التفاصيل</a>
+          </div>
+        </div>
+      </div>`; }).join('');
+  }
+
+  loadFeatured();
+})();
+
+</script>
+
+</body>
+</html>

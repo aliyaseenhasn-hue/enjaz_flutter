@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنجاز - إدارة المحتوى</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <style>
+        .admin-header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            color: white;
+            padding: 20px;
+            border-radius: 0 0 28px 28px;
+        }
+        .admin-nav {
+            display: flex;
+            gap: 8px;
+            padding: 16px;
+            overflow-x: auto;
+        }
+        .admin-nav-item {
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-decoration: none;
+            white-space: nowrap;
+            transition: var(--transition);
+        }
+        .admin-nav-item:hover, .admin-nav-item.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .content-box {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 32px;
+            margin: 20px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-header">
+    <div class="admin-info" style="display: flex; justify-content: space-between; align-items: center; padding: 0 16px;">
+        <h1>إدارة المحتوى <i class="fa-solid fa-folder-open"></i></h1>
+        <span class="admin-badge">مشرف</span>
+    </div>
+</div>
+
+<div class="admin-nav">
+    <a href="/admin/dashboard/" class="admin-nav-item">الرئيسية</a>
+    <a href="/admin/users/" class="admin-nav-item">المستخدمين</a>
+    <a href="/admin/content/" class="admin-nav-item active">المحتوى</a>
+    <a href="/admin/reports/" class="admin-nav-item">البلاغات</a>
+    <a href="/admin/analytics/" class="admin-nav-item">التحليلات</a>
+</div>
+
+<div class="content-box">
+    <i class="fa-solid fa-construction" style="font-size: 3rem; color: var(--warning); margin-bottom: 16px;"></i>
+    <h2>🚧 صفحة قيد التطوير</h2>
+    <p>سيتم إضافة إدارة المحتوى (التصنيفات، الخدمات، المقالات) قريباً.</p>
+    <a href="/admin/dashboard/" class="btn btn-primary" style="margin-top: 16px; display: inline-block; padding: 10px 20px; background: var(--primary); color: white; border-radius: 40px; text-decoration: none;">
+        <i class="fa-solid fa-arrow-right"></i> العودة للوحة التحكم
+    </a>
+</div>
+
+<button class="back-btn" onclick="window.history.back()" style="margin: 16px;">
+    <i class="fa-solid fa-arrow-right"></i> رجوع
+</button>
+
+</body>
+</html>

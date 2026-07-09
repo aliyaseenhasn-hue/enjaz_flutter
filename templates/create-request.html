@@ -1,0 +1,512 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>إنجاز – إنشاء طلب خدمة</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <style>
+    .page-container { max-width: 600px; margin: 0 auto; padding: 0 16px 90px; }
+    
+    .card {
+      background: white;
+      border-radius: 28px;
+      padding: 24px 20px;
+      margin-bottom: 16px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .card-title i { color: #0d9488; }
+    
+    .field { margin-bottom: 18px; }
+    
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 7px;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 13px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14px;
+      background: #f8fffe;
+      color: #0f172a;
+      outline: none;
+      transition: all 0.25s;
+      direction: rtl;
+    }
+    
+    .form-control:focus {
+      border-color: #0d9488;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(13,148,136,0.1);
+    }
+    
+    .form-control::placeholder { color: #94a3b8; }
+    
+    select.form-control {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: left 14px center;
+      background-size: 18px;
+      padding-left: 44px;
+      cursor: pointer;
+    }
+    
+    textarea.form-control {
+      resize: vertical;
+      min-height: 100px;
+      padding: 14px 16px;
+    }
+    
+    /* ═══ الخريطة ═══ */
+    .map-wrapper {
+      border-radius: 20px;
+      overflow: hidden;
+      border: 2px solid #e2e8f0;
+      margin-top: 8px;
+    }
+    
+    #map { height: 280px; border-radius: 20px; }
+    
+    .map-note {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .map-note i { color: #0d9488; }
+    
+    /* ═══ زر الإرسال ═══ */
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, #0d9488, #0ea5e9);
+      color: white;
+      border: none;
+      padding: 15px;
+      border-radius: 40px;
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
+      font-family: 'Tajawal', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(13,148,136,0.3);
+      transition: all 0.3s;
+    }
+    
+    .btn-submit:hover {
+      box-shadow: 0 8px 28px rgba(13,148,136,0.4);
+      transform: translateY(-2px);
+    }
+    
+    .btn-submit:active { transform: scale(0.97); }
+    
+    .status-msg {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    
+    /* ═══ رسالة المنع ═══ */
+    .agent-warning {
+      background: linear-gradient(135deg, #f0fdfa, #e0f2fe);
+      border-radius: 24px;
+      padding: 28px 20px;
+      text-align: center;
+      color: #0369a1;
+      border: 2px solid #ccfbf1;
+      margin-bottom: 16px;
+    }
+    
+    .agent-warning-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+    
+    .agent-warning h3 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    
+    .agent-warning p {
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    
+    .warning-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .warning-btn {
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    
+    .warning-btn.primary {
+      background: #0d9488;
+      color: white;
+    }
+    
+    .warning-btn.secondary {
+      background: white;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+
+<button class="back-btn" onclick="window.history.length > 1 ? window.history.back() : window.location.href='/'" style="margin:16px;">
+  <i class="fa-solid fa-arrow-right"></i>
+  العودة
+</button>
+
+<div class="page-container">
+  <!-- ═══ رسالة المنع لمقدمي الخدمة ═══ -->
+  <div id="agentWarning" class="agent-warning" style="display:none;">
+    <div class="agent-warning-icon">🚫</div>
+    <h3>لا يمكنك إنشاء طلب خدمة</h3>
+    <p>أنت مسجل كمقدم خدمة (مندوب). لإنشاء طلب جديد، يجب أن يكون حسابك من نوع "طالب خدمة".</p>
+    <div class="warning-actions">
+      <a href="/settings/" class="warning-btn primary">
+        <i class="fa-solid fa-gear"></i>
+        تغيير نوع الحساب
+      </a>
+      <a href="/profile-mhn/" class="warning-btn secondary">
+        <i class="fa-solid fa-house"></i>
+        العودة لصفحتي
+      </a>
+    </div>
+  </div>
+
+  <!-- ═══ نموذج الطلب ═══ -->
+    <!-- ═══ قسم تتبع الطلبات ═══ -->
+    <div id="trackingSection" style="display:none;">
+      <div class="card">
+        <div class="card-title">
+          <i class="fa-solid fa-list-check"></i>
+          طلباتي الحالية
+        </div>
+        <div id="requests-list">
+          <div class="loading">جاري التحميل...</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="customerForm">
+    <div class="card">
+      <div class="card-title">
+        <i class="fa-solid fa-plus-circle"></i>
+        إنشاء طلب خدمة جديد
+      </div>
+
+      <form id="request-form">
+        <div class="field">
+          <label><i class="fa-solid fa-tag" style="color:#0d9488; margin-left:6px;"></i>عنوان الطلب</label>
+          <input type="text" id="title" class="form-control" required placeholder="مثال: تركيب مكيف سبليت">
+        </div>
+
+        <div class="field">
+          <label><i class="fa-solid fa-folder" style="color:#0d9488; margin-left:6px;"></i>نوع التخصص</label>
+          <select id="category" class="form-control" required>
+            <option value="" disabled selected>جارٍ تحميل التصنيفات...</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label><i class="fa-solid fa-pen" style="color:#0d9488; margin-left:6px;"></i>تفاصيل الطلب</label>
+          <textarea id="details" class="form-control" rows="3" required placeholder="اكتب وصفاً دقيقاً للخدمة التي تحتاجها..."></textarea>
+        </div>
+
+        <div class="field">
+          <label><i class="fa-solid fa-coins" style="color:#0d9488; margin-left:6px;"></i>الميزانية المقترحة (د.ع)</label>
+          <input type="number" id="budget" class="form-control" placeholder="اختياري — مثال: 150000">
+        </div>
+
+        <div class="field">
+          <label><i class="fa-solid fa-map-location-dot" style="color:#0d9488; margin-left:6px;"></i>موقع الخدمة</label>
+          <div class="map-wrapper">
+            <div id="map"></div>
+          </div>
+          <div class="map-note">
+            <i class="fa-solid fa-info-circle"></i>
+            اضغط أو اسحب الدبوس لتحديد الموقع الدقيق
+          </div>
+          <input type="hidden" id="lat" value="">
+          <input type="hidden" id="lon" value="">
+        </div>
+
+        <button type="submit" class="btn-submit">
+          <i class="fa-solid fa-paper-plane"></i>
+          نشر الطلب
+        </button>
+        <div id="statusMsg" class="status-msg"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ الشريط السفلي ═══ -->
+<nav class="bottom-tab-bar">
+  <a href="/profileuser/" class="tab-item"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+  <a href="/service-requests/" class="tab-item"><i class="fa-solid fa-briefcase"></i><span>دليل المهن</span></a>
+  <a href="/create-request/" class="tab-item active"><i class="fa-solid fa-plus-circle"></i><span>طلب جديد</span></a>
+  <a href="/create-request/?tab=tracking" class="tab-item"><i class="fa-solid fa-list-check"></i><span>طلباتي</span></a>
+  <a href="/chat/" class="tab-item"><i class="fa-solid fa-envelope"></i><span>الرسائل</span></a>
+  <a href="/settings/" class="tab-item"><i class="fa-solid fa-gear"></i><span>حسابي</span></a>
+</nav>
+
+<script>
+(function () {
+  const token = localStorage.getItem('enjaz_pwa_token');
+  if (!token) { window.location.replace('/singin/'); return; }
+
+  const userRole = localStorage.getItem('enjaz_user_role');
+  const agentWarning = document.getElementById('agentWarning');
+  const customerForm = document.getElementById('customerForm');
+
+  if (userRole === 'agent') {
+    agentWarning.style.display = 'block';
+    customerForm.style.display = 'none';
+    return;
+  }
+
+  // الموقع
+  const locationEnabled = localStorage.getItem('location_enabled') === 'true';
+  const savedLat = localStorage.getItem('user_lat');
+  const savedLon = localStorage.getItem('user_lon');
+
+  let defaultLat = savedLat ? parseFloat(savedLat) : 33.3152;
+  let defaultLon = savedLon ? parseFloat(savedLon) : 44.3661;
+
+  // تحميل التصنيفات
+  async function loadCategories() {
+    try {
+      const res = await fetch('/api/services/categories/', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        const cats = await res.json();
+        const select = document.getElementById('category');
+        select.innerHTML = '<option value="" disabled selected>اختر التخصص</option>';
+        cats.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name;
+          select.appendChild(opt);
+        });
+      }
+    } catch (e) { console.warn(e); }
+  }
+  loadCategories();
+
+  // الخريطة
+  let map, marker;
+  function initMap(lat, lon) {
+    if (map) return;
+    map = L.map('map').setView([lat, lon], 13);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> & CartoDB'
+    }).addTo(map);
+    marker = L.marker([lat, lon], { draggable: true }).addTo(map);
+    updateCoords(lat, lon);
+    marker.on('dragend', e => {
+      const pos = marker.getLatLng();
+      updateCoords(pos.lat, pos.lng);
+    });
+    map.on('click', e => {
+      marker.setLatLng(e.latlng);
+      updateCoords(e.latlng.lat, e.latlng.lng);
+    });
+  }
+
+  function updateCoords(lat, lon) {
+    document.getElementById('lat').value = parseFloat(lat).toFixed(6);
+    document.getElementById('lon').value = parseFloat(lon).toFixed(6);
+  }
+
+  if (locationEnabled && !savedLat) {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const lat = pos.coords.latitude, lon = pos.coords.longitude;
+          localStorage.setItem('user_lat', lat);
+          localStorage.setItem('user_lon', lon);
+          initMap(lat, lon);
+          updateCoords(lat, lon);
+        },
+        () => initMap(defaultLat, defaultLon)
+      );
+    } else { initMap(defaultLat, defaultLon); }
+  } else { initMap(defaultLat, defaultLon); }
+
+  // إرسال النموذج
+  document.getElementById('request-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('statusMsg');
+    msg.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري الإرسال...';
+    msg.style.color = '#64748b';
+
+    const title = document.getElementById('title').value.trim();
+    const categoryId = parseInt(document.getElementById('category').value);
+    const details = document.getElementById('details').value.trim();
+    const budget = document.getElementById('budget').value;
+    const lat = document.getElementById('lat').value;
+    const lon = document.getElementById('lon').value;
+
+    if (!categoryId) { msg.innerHTML = '❌ اختر التخصص'; msg.style.color = '#ef4444'; return; }
+
+    const payload = {
+      title, category_id: categoryId, details,
+      estimated_price: budget ? parseInt(budget) : null,
+      lat: lat ? parseFloat(lat) : null,
+      lon: lon ? parseFloat(lon) : null
+    };
+
+    try {
+      const response = await fetch('/api/services/requests/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        msg.innerHTML = '✅ تم نشر طلبك بنجاح!';
+        msg.style.color = '#22c55e';
+        document.getElementById('request-form').reset();
+        setTimeout(() => {
+          const url = new URL(window.location);
+          url.searchParams.set('tab', 'tracking');
+          window.location.href = url.href;
+        }, 2000);
+      } else {
+        let err = 'حدث خطأ';
+        try { const d = await response.json(); err = d.detail || d.error || JSON.stringify(d); } catch (e) {}
+        msg.innerHTML = `❌ ${err}`;
+        msg.style.color = '#ef4444';
+      }
+    } catch (err) {
+      msg.innerHTML = '❌ فشل الاتصال';
+      msg.style.color = '#ef4444';
+    }
+  });
+
+  // إدارة التبويبات
+  function handleTabs() {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab === 'tracking') {
+      customerForm.style.display = 'none';
+      document.getElementById('trackingSection').style.display = 'block';
+      loadMyRequests();
+
+      // تحديث حالة الشريط السفلي
+      document.querySelectorAll('.bottom-tab-bar .tab-item').forEach(el => el.classList.remove('active'));
+      const trackingTab = document.querySelector('.bottom-tab-bar .tab-item[href*="tab=tracking"]');
+      if (trackingTab) trackingTab.classList.add('active');
+    }
+  }
+
+  async function loadMyRequests() {
+    const container = document.getElementById('requests-list');
+    try {
+      const res = await fetch('/api/services/requests/my/', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) throw new Error();
+      const requests = await res.json();
+
+      if (!requests.length) {
+        container.innerHTML = '<div class="empty-msg"><h4>لا توجد طلبات</h4><p>لم تقم بإنشاء أي طلبات بعد.</p></div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      requests.forEach(req => {
+        let statusText = 'قيد الانتظار';
+        let statusClass = 'pending';
+        if (req.status === 'in_progress') { statusText = 'قيد التنفيذ'; statusClass = 'in_progress'; }
+        else if (req.status === 'completed') { statusText = 'مكتمل'; statusClass = 'completed'; }
+        else if (req.status === 'cancelled') { statusText = 'ملغي'; statusClass = 'cancelled'; }
+
+        container.innerHTML += `
+          <div class="request-item" onclick="window.location.href='/request-details/${req.id}/'" style="background:#f8fffe; border-radius:16px; padding:16px; margin-bottom:12px; cursor:pointer; border:1px solid #e2e8f0;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+              <div style="font-weight:800; color:#0f172a;">${escapeHtml(req.title)}</div>
+              <div style="font-size:0.8rem; font-weight:700; color:#0d9488;">💰 ${req.estimated_price ? req.estimated_price.toLocaleString() + ' د.ع' : 'حسب الاتفاق'}</div>
+            </div>
+            <div style="font-size:0.75rem; color:#64748b; margin-bottom:10px;">${escapeHtml(req.category_name || '')}</div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+               <span class="status-badge ${statusClass}" style="font-size:0.7rem;">${statusText}</span>
+               <span style="font-size:0.7rem; color:#94a3b8;">${new Date(req.created_at).toLocaleDateString('ar-EG')}</span>
+            </div>
+          </div>`;
+      });
+    } catch (e) {
+      container.innerHTML = '<div class="empty-msg"><p>❌ فشل تحميل الطلبات</p></div>';
+    }
+  }
+
+  function escapeHtml(s) {
+    if (!s) return '';
+    return s.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]);
+  }
+
+  handleTabs();
+
+  function getCookie(name) {
+    let value = null;
+    if (document.cookie && document.cookie !== '') {
+      document.cookie.split(';').forEach(c => {
+        c = c.trim();
+        if (c.startsWith(name + '=')) value = decodeURIComponent(c.substring(name.length + 1));
+      });
+    }
+    return value;
+  }
+})();
+</script>
+</body>
+</html>

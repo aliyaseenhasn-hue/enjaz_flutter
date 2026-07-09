@@ -1,0 +1,377 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنجاز - سجل المعاملات</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 24px 20px;
+            border-radius: 0 0 28px 28px;
+        }
+        
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .stats-summary {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.15);
+            border-radius: var(--radius-md);
+            padding: 14px 20px;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .stat-card .value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            display: block;
+        }
+        
+        .stat-card .label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+        
+        .tabs {
+            display: flex;
+            margin: 16px;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 4px;
+            border: 1px solid var(--border);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+            font-family: var(--font);
+        }
+        
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .tab-btn:not(.active):hover {
+            background: var(--primary-muted);
+            color: var(--primary);
+        }
+        
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            padding: 0 16px 16px;
+            overflow-x: auto;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            border-radius: var(--radius-full);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: var(--transition);
+            font-family: var(--font);
+        }
+        
+        .filter-btn.active, .filter-btn:hover {
+            background: var(--primary-muted);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .transactions-list {
+            padding: 0 16px 100px;
+        }
+        
+        .date-group {
+            margin-bottom: 20px;
+        }
+        
+        .date-header {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .date-header::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        
+        .transaction-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            transition: var(--transition);
+        }
+        
+        .transaction-card:hover {
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .transaction-info {
+            flex: 1;
+        }
+        
+        .transaction-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-badge-small {
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            font-weight: 700;
+        }
+        
+        .status-badge-small.completed {
+            background: var(--success-bg);
+            color: var(--success-dark);
+        }
+        
+        .status-badge-small.pending {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+        
+        .status-badge-small.cancelled {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+        
+        .transaction-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+        
+        .transaction-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .transaction-amount {
+            text-align: left;
+        }
+        
+        .amount-value {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+        }
+        
+        .amount-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        
+        .transaction-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            font-family: var(--font);
+        }
+        
+        .action-btn.primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .action-btn.secondary {
+            background: var(--bg-gray);
+            color: var(--text-muted);
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .empty-state p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1><i class="fa-solid fa-receipt"></i> سجل المعاملات</h1>
+    <div class="stats-summary">
+        <div class="stat-card">
+            <span class="value" id="totalCount">0</span>
+            <span class="label">إجمالي المعاملات</span>
+        </div>
+        <div class="stat-card">
+            <span class="value" id="totalAmount">0</span>
+            <span class="label">إجمالي المبالغ</span>
+        </div>
+    </div>
+</div>
+
+<div class="tabs">
+    <button class="tab-btn active" data-tab="all">الكل</button>
+    <button class="tab-btn" data-tab="completed">مكتملة</button>
+    <button class="tab-btn" data-tab="pending">قيد الانتظار</button>
+    <button class="tab-btn" data-tab="cancelled">ملغية</button>
+</div>
+
+<div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">هذا الشهر</button>
+    <button class="filter-btn" data-filter="3months">آخر 3 أشهر</button>
+    <button class="filter-btn" data-filter="6months">آخر 6 أشهر</button>
+    <button class="filter-btn" data-filter="year">هذا العام</button>
+</div>
+
+<div id="transactionsList" class="transactions-list">
+    <!-- سيتم تحميل المعاملات ديناميكياً -->
+</div>
+
+<nav class="bottom-tab-bar">
+    <a href="/profileuser/" class="tab-item"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+    <a href="/service-requests/" class="tab-item"><i class="fa-solid fa-briefcase"></i><span>دليل المهن</span></a>
+    <a href="/create-request/" class="tab-item"><i class="fa-solid fa-plus-circle"></i><span>طلب جديد</span></a>
+    <a href="/create-request/?tab=tracking" class="tab-item"><i class="fa-solid fa-list-check"></i><span>طلباتي</span></a>
+    <a href="/chat/" class="tab-item"><i class="fa-solid fa-envelope"></i><span>الرسائل</span></a>
+    <a href="/settings/" class="tab-item"><i class="fa-solid fa-gear"></i><span>حسابي</span></a>
+</nav>
+
+<script>
+(function() {
+  const token = localStorage.getItem('enjaz_pwa_token');
+  if (!token) { window.location.replace('/singin/'); return; }
+  let currentTab = 'all', allRequests = [];
+
+  function formatAmount(a) { return a ? Number(a).toLocaleString() + ' د.ع' : 'قيد الاتفاق'; }
+  function getStatusLabel(s) { return ({completed:'مكتمل',pending:'قيد الانتظار',in_progress:'قيد التنفيذ',cancelled:'ملغي'})[s] || s; }
+
+  async function loadTransactions() {
+    try {
+      const res = await fetch('/api/services/requests/my/', { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) throw new Error();
+      allRequests = await res.json();
+      renderTransactions();
+    } catch (e) {
+      document.getElementById('transactionsList').innerHTML = `<div class="empty-state"><i class="fa-solid fa-receipt"></i><h3>فشل تحميل المعاملات</h3></div>`;
+    }
+  }
+
+  function renderTransactions() {
+    const container = document.getElementById('transactionsList');
+    const filtered = currentTab === 'all' ? allRequests : allRequests.filter(r => r.status === currentTab);
+    const total = filtered.filter(r => r.status === 'completed').reduce((s,r) => s + (r.estimated_price||0), 0);
+    document.getElementById('totalCount').textContent = filtered.length;
+    document.getElementById('totalAmount').textContent = formatAmount(total);
+    if (!filtered.length) {
+      container.innerHTML = `<div class="empty-state"><i class="fa-solid fa-receipt"></i><h3>لا توجد معاملات</h3></div>`;
+      return;
+    }
+    container.innerHTML = filtered.map(t => `
+      <div class="transaction-card">
+        <div class="transaction-info">
+          <div class="transaction-title">${t.title} <span class="status-badge-small ${t.status}">${getStatusLabel(t.status)}</span></div>
+          <div class="transaction-meta">
+            <span><i class="fa-solid fa-tag"></i> ${t.category_name || ''}</span>
+            ${t.agent_name ? `<span><i class="fa-solid fa-user"></i> ${t.agent_name}</span>` : ''}
+            <span><i class="fa-solid fa-hashtag"></i> #${t.id}</span>
+          </div>
+          <div class="transaction-actions"><button class="action-btn secondary" onclick="window.location.href='/request-details/${t.id}/'"><i class="fa-solid fa-eye"></i> التفاصيل</button></div>
+        </div>
+        <div class="transaction-amount">
+          <div class="amount-value">${formatAmount(t.estimated_price)}</div>
+          <div class="amount-label">${t.status === 'completed' ? 'تم الدفع' : 'معلق'}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active'); currentTab = btn.dataset.tab; renderTransactions();
+  }));
+
+  loadTransactions();
+})();
+
+</script>
+
+</body>
+</html>

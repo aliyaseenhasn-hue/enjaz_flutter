@@ -1,0 +1,545 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنجاز - الدعم والبلاغات</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 24px 20px;
+            border-radius: 0 0 28px 28px;
+            text-align: center;
+        }
+        
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        
+        .page-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .support-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 20px 16px;
+        }
+        
+        .support-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 20px 16px;
+            text-align: center;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .support-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .support-card.active {
+            border-color: var(--primary);
+            background: var(--primary-muted);
+        }
+        
+        .support-card i {
+            font-size: 2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .support-card h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .support-card p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .form-section {
+            padding: 0 16px 100px;
+        }
+        
+        .form-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            padding: 24px 20px;
+            border: 1px solid var(--border);
+        }
+        
+        .form-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-title i {
+            color: var(--primary);
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-lg);
+            font-size: 16px;
+            font-family: var(--font);
+            background: var(--bg-light);
+            color: var(--text-primary);
+            direction: rtl;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary);
+            background: white;
+            outline: none;
+            box-shadow: 0 0 0 4px var(--primary-glow);
+        }
+        
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .file-upload {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .file-upload:hover {
+            border-color: var(--primary);
+            background: var(--primary-muted);
+        }
+        
+        .file-upload i {
+            font-size: 2rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        
+        .file-upload p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        
+        .file-upload span {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .file-list {
+            margin-top: 12px;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: var(--bg-gray);
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+        }
+        
+        .file-item span {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .file-item button {
+            background: none;
+            border: none;
+            color: var(--danger);
+            cursor: pointer;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: var(--radius-full);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .submit-btn:hover {
+            box-shadow: var(--shadow-primary);
+            transform: translateY(-1px);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .contact-direct {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            padding: 24px 20px;
+            margin: 20px 16px;
+            border: 1px solid var(--border);
+        }
+        
+        .contact-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        
+        .contact-methods {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .contact-btn {
+            flex: 1;
+            padding: 16px;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .contact-btn.whatsapp {
+            background: #25d366;
+            color: white;
+        }
+        
+        .contact-btn.phone {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .contact-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .contact-btn i {
+            font-size: 1.5rem;
+            margin-bottom: 6px;
+            display: block;
+        }
+        
+        .contact-btn span {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .success-message {
+            text-align: center;
+            padding: 40px 20px;
+            display: none;
+        }
+        
+        .success-message.show {
+            display: block;
+        }
+        
+        .success-message i {
+            font-size: 4rem;
+            color: var(--success);
+            margin-bottom: 20px;
+        }
+        
+        .success-message h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+        
+        .success-message p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .ticket-number {
+            background: var(--primary-muted);
+            padding: 12px 20px;
+            border-radius: var(--radius-full);
+            display: inline-block;
+            margin-top: 16px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1>🆘 الدعم والبلاغات</h1>
+    <p>نساعدك في حل أي مشكلة تواجهك</p>
+</div>
+
+<div class="support-options">
+    <div class="support-card active" data-type="report">
+        <i class="fa-solid fa-flag"></i>
+        <h3>تقديم بلاغ</h3>
+        <p>الإبلاغ عن مشكلة</p>
+    </div>
+    <div class="support-card" data-type="suggestion">
+        <i class="fa-solid fa-lightbulb"></i>
+        <h3>اقتراح</h3>
+        <p>شاركنا أفكارك</p>
+    </div>
+    <div class="support-card" data-type="question">
+        <i class="fa-solid fa-circle-question"></i>
+        <h3>استفسار</h3>
+        <p>لديك سؤال</p>
+    </div>
+    <div class="support-card" data-type="complaint">
+        <i class="fa-solid fa-face-angry"></i>
+        <h3>شكوى</h3>
+        <p>لديك شكوى</p>
+    </div>
+</div>
+
+<div class="form-section">
+    <div id="formCard" class="form-card">
+        <div id="formContent">
+            <div class="form-title">
+                <i class="fa-solid fa-file-contract"></i>
+                <span id="formTitleText">نموذج البلاغ</span>
+            </div>
+            
+            <div class="form-group">
+                <label>نوع المشكلة</label>
+                <select id="issueType" required>
+                    <option value="">اختر نوع المشكلة</option>
+                    <option value="incomplete_service">الخدمة غير مكتملة</option>
+                    <option value="no_show">عدم الالتزام بالموعد</option>
+                    <option value="bad_behavior">سوء المعاملة</option>
+                    <option value="fraud">احتيال أو نصب</option>
+                    <option value="content_violation">محتوى مخالف</option>
+                    <option value="technical">مشكلة تقنية</option>
+                    <option value="other">أخرى</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>رقم الطلب / رقم المستخدم</label>
+                <input type="text" id="referenceId" placeholder="مثال: #1234 أو اسم المستخدم">
+            </div>
+            
+            <div class="form-group">
+                <label>الموضوع</label>
+                <input type="text" id="subject" placeholder="اكتب عنوان موجز للمشكلة" required>
+            </div>
+            
+            <div class="form-group">
+                <label>تفاصيل المشكلة</label>
+                <textarea id="details" placeholder="اشرح المشكلة بشكل مفصل..." required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>إرفاق ملفات (اختياري)</label>
+                <div class="file-upload" onclick="document.getElementById('fileInput').click()">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <p>اسحب الملفات هنا أو <span>اضغط للاختيار</span></p>
+                    <p style="font-size:0.75rem;color:var(--text-light);margin-top:8px;">صور، ملفات PDF (حتى 5MB)</p>
+                </div>
+                <input type="file" id="fileInput" multiple accept="image/*,.pdf" style="display:none;" onchange="handleFiles(this.files)">
+                <div id="fileList" class="file-list"></div>
+            </div>
+            
+            <button id="submitBtn" class="submit-btn" onclick="submitReport()">
+                <i class="fa-solid fa-paper-plane"></i>
+                إرسال البلاغ
+            </button>
+        </div>
+        
+        <div id="successMessage" class="success-message">
+            <i class="fa-solid fa-circle-check"></i>
+            <h3>تم إرسال بلاغك بنجاح!</h3>
+            <p>سيتم مراجعة بلاغك والتواصل معك خلال 24-48 ساعة</p>
+            <div class="ticket-number" id="ticketNumber">رقم التذكرة: #------</div>
+            <button class="submit-btn" style="margin-top:20px;" onclick="location.reload()">
+                <i class="fa-solid fa-plus"></i>
+                تقديم بلاغ جديد
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="contact-direct">
+    <div class="contact-title">أو تواصل معنا مباشرة</div>
+    <div class="contact-methods">
+        <a href="https://wa.me/9647700000000" target="_blank" class="contact-btn whatsapp">
+            <i class="fa-brands fa-whatsapp"></i>
+            <span>واتساب</span>
+        </a>
+        <a href="tel:+9647700000000" class="contact-btn phone">
+            <i class="fa-solid fa-phone"></i>
+            <span>اتصال</span>
+        </a>
+    </div>
+</div>
+
+<nav class="bottom-tab-bar">
+    <a href="/profileuser/" class="tab-item"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+    <a href="/service-requests/" class="tab-item"><i class="fa-solid fa-briefcase"></i><span>دليل المهن</span></a>
+    <a href="/create-request/" class="tab-item"><i class="fa-solid fa-plus-circle"></i><span>طلب جديد</span></a>
+    <a href="/create-request/?tab=tracking" class="tab-item"><i class="fa-solid fa-list-check"></i><span>طلباتي</span></a>
+    <a href="/chat/" class="tab-item"><i class="fa-solid fa-envelope"></i><span>الرسائل</span></a>
+    <a href="/settings/" class="tab-item"><i class="fa-solid fa-gear"></i><span>حسابي</span></a>
+</nav>
+
+<script>
+(function() {
+    const token = localStorage.getItem('enjaz_pwa_token');
+    let currentType = 'report';
+    let uploadedFiles = [];
+    
+    const typeConfig = {
+        report: { title: 'نموذج البلاغ', btnText: 'إرسال البلاغ' },
+        suggestion: { title: 'نموذج الاقتراح', btnText: 'إرسال الاقتراح' },
+        question: { title: 'نموذج الاستفسار', btnText: 'إرسال الاستفسار' },
+        complaint: { title: 'نموذج الشكوى', btnText: 'إرسال الشكوى' }
+    };
+    
+    // Support type switching
+    document.querySelectorAll('.support-card').forEach(card => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.support-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            currentType = card.dataset.type;
+            
+            document.getElementById('formTitleText').textContent = typeConfig[currentType].title;
+            document.getElementById('submitBtn').innerHTML = `<i class="fa-solid fa-paper-plane"></i>${typeConfig[currentType].btnText}`;
+        });
+    });
+    
+    function handleFiles(files) {
+        const fileList = document.getElementById('fileList');
+        Array.from(files).forEach(file => {
+            if (file.size > 5 * 1024 * 1024) {
+                alert('حجم الملف ' + file.name + ' كبير جداً (الحد الأقصى 5MB)');
+                return;
+            }
+            uploadedFiles.push(file);
+            
+            const div = document.createElement('div');
+            div.className = 'file-item';
+            div.innerHTML = `
+                <span><i class="fa-solid fa-file"></i> ${file.name}</span>
+                <button onclick="removeFile(this, '${file.name}')"><i class="fa-solid fa-times"></i></button>
+            `;
+            fileList.appendChild(div);
+        });
+    }
+    
+    window.removeFile = function(btn, filename) {
+        uploadedFiles = uploadedFiles.filter(f => f.name !== filename);
+        btn.parentElement.remove();
+    };
+    
+    async function submitReport() {
+        const issueType = document.getElementById('issueType').value;
+        const referenceId = document.getElementById('referenceId').value;
+        const subject = document.getElementById('subject').value;
+        const details = document.getElementById('details').value;
+        
+        if (!issueType || !subject || !details) {
+            alert('الرجاء ملء جميع الحقول المطلوبة');
+            return;
+        }
+        
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الإرسال...';
+        
+        const formData = {
+            type: currentType,
+            issue_type: issueType,
+            reference_id: referenceId,
+            subject: subject,
+            details: details
+        };
+        
+        try {
+            // API call
+            // const res = await fetch('/api/support/submit/', {
+            //     method: 'POST',
+            //     headers: { 
+            //         'Authorization': `Bearer ${token}`,
+            //         'Content-Type': 'application/json'
+            //     },
+            //     body: JSON.stringify(formData)
+            // });
+            
+            // Simulate success
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            const ticketNumber = 'TKT-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+            
+            document.getElementById('formContent').style.display = 'none';
+            document.getElementById('ticketNumber').textContent = 'رقم التذكرة: ' + ticketNumber;
+            document.getElementById('successMessage').classList.add('show');
+            
+        } catch (e) {
+            alert('حدث خطأ، حاول مرة أخرى');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>إرسال البلاغ';
+        }
+    }
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,213 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>إنجاز – إكمال الملف الشخصي</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <style>
+  
+  .password-wrapper {
+  position: relative;
+}
+.password-toggle {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--text-muted);
+  z-index: 2;
+}
+.password-toggle:hover {
+  color: var(--primary);
+}
+  
+  
+  
+  
+  
+    .verification-step { display: none; }
+    .verification-step.active { display: block; }
+    .flex-buttons { display: flex; gap: 12px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+<div class="page-container" style="max-width: 500px; margin: 2rem auto;">
+  <div class="card">
+    <div class="card-header" style="text-align:center;">
+      <div class="card-icon">📱</div>
+      <h1>أكمل ملفك الشخصي</h1>
+      <p>أدخل رقم هاتفك الحقيقي وكلمة مرور جديدة</p>
+    </div>
+    <div id="msg" class="message" style="display:none;"></div>
+    <!-- الخطوة 1: رقم الهاتف + كلمة المرور -->
+    <div id="step1" class="verification-step active">
+      <div class="input-group">
+        <label class="input-label">رقم الهاتف</label>
+        <div class="input-wrapper">
+          <span class="input-icon">📞</span>
+          <input type="tel" id="phoneNumber" class="form-control" placeholder="077XXXXXXXX" dir="ltr">
+        <div class="input-group">
+  <label class="input-label">كلمة المرور الجديدة</label>
+  <div class="password-wrapper">
+    <input type="password" id="password" class="form-control" placeholder="6 أحرف على الأقل">
+    <i class="fa-regular fa-eye password-toggle" id="togglePassword"></i>
+  </div>
+</div>
+        </div>
+      </div>
+<div class="input-group">
+  <label class="input-label">تأكيد كلمة المرور</label>
+  <div class="password-wrapper">
+    <input type="password" id="confirmPassword" class="form-control" placeholder="أعد كتابة كلمة المرور">
+    <i class="fa-regular fa-eye password-toggle" id="toggleConfirm"></i>
+  </div>
+</div>
+      <button id="sendCodeBtn" class="btn btn-primary btn-block">
+        <i class="fa-brands fa-whatsapp"></i> إرسال رمز التحقق عبر واتساب
+      </button>
+    </div>
+    <!-- الخطوة 2: رمز التحقق -->
+    <div id="step2" class="verification-step">
+      <div class="input-group">
+        <label class="input-label">رمز التحقق</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔢</span>
+          <input type="text" id="verificationCode" class="form-control" placeholder="أدخل الرمز المكون من 6 أرقام" maxlength="6">
+        </div>
+      </div>
+      <div class="flex-buttons">
+        <button id="backBtn" class="btn btn-secondary">رجوع</button>
+        <button id="verifyBtn" class="btn btn-primary">تأكيد الرمز</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const token = localStorage.getItem('enjaz_pwa_token');
+  if (!token) window.location.href = '/singin/';
+  const userRole = localStorage.getItem('enjaz_user_role') || 'customer';
+
+  function showMsg(text, type) {
+    const msgDiv = document.getElementById('msg');
+    msgDiv.textContent = text;
+    msgDiv.className = `message ${type}`;
+    msgDiv.style.display = 'flex';
+    setTimeout(() => msgDiv.style.display = 'none', 5000);
+  }
+
+  function validatePasswords() {
+    const pass = document.getElementById('password').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    if (pass.length < 6) { showMsg('❌ كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'error'); return false; }
+    if (pass !== confirm) { showMsg('❌ كلمتا المرور غير متطابقتين', 'error'); return false; }
+    return true;
+  }
+
+  async function sendCode() {
+    const phone = document.getElementById('phoneNumber').value.trim();
+    if (!phone.match(/^07[3456789]\d{8}$/)) {
+      showMsg('❌ رقم هاتف غير صحيح (مثال: 07712345678)', 'error');
+      return;
+    }
+    if (!validatePasswords()) return;
+    const btn = document.getElementById('sendCodeBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> جاري الإرسال...';
+    try {
+      const res = await fetch('/api/auth/send-verification-code/', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone_number: phone })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('temp_password', document.getElementById('password').value);
+        showMsg('✅ تم إرسال رمز التحقق عبر واتساب', 'success');
+        document.getElementById('step1').classList.remove('active');
+        document.getElementById('step2').classList.add('active');
+      } else {
+        showMsg('❌ ' + (data.detail || 'فشل الإرسال'), 'error');
+      }
+    } catch (e) {
+      showMsg('❌ فشل الاتصال بالخادم', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> إرسال رمز التحقق عبر واتساب';
+    }
+  }
+
+  async function verifyCode() {
+    const code = document.getElementById('verificationCode').value.trim();
+    if (!code || code.length !== 6) {
+      showMsg('❌ أدخل الرمز المكون من 6 أرقام', 'error');
+      return;
+    }
+    const newPassword = localStorage.getItem('temp_password') || '';
+    const btn = document.getElementById('verifyBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> جاري التحقق...';
+    try {
+      const res = await fetch('/api/auth/verify-phone/', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code, new_password: newPassword, confirm_password: newPassword })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.removeItem('temp_password');
+        showMsg('✅ تم توثيق رقم الهاتف وتعيين كلمة المرور بنجاح', 'success');
+        setTimeout(() => {
+          window.location.href = userRole === 'agent' ? '/profile-mhn/' : '/profileuser/';
+        }, 1500);
+      } else {
+        showMsg('❌ ' + (data.detail || 'فشل التحقق'), 'error');
+      }
+    } catch (e) {
+      showMsg('❌ فشل الاتصال', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'تأكيد الرمز';
+    }
+  }
+
+  document.getElementById('sendCodeBtn').addEventListener('click', sendCode);
+  document.getElementById('verifyBtn').addEventListener('click', verifyCode);
+  document.getElementById('backBtn').addEventListener('click', () => {
+    document.getElementById('step2').classList.remove('active');
+    document.getElementById('step1').classList.add('active');
+  });
+  
+  // إظهار/إخفاء كلمة المرور
+const togglePassword = document.getElementById('togglePassword');
+const toggleConfirm = document.getElementById('toggleConfirm');
+const passwordInput = document.getElementById('password');
+const confirmInput = document.getElementById('confirmPassword');
+
+function toggleVisibility(input, icon) {
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.remove('fa-eye');
+    icon.classList.add('fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.remove('fa-eye-slash');
+    icon.classList.add('fa-eye');
+  }
+}
+
+if (togglePassword) {
+  togglePassword.addEventListener('click', () => toggleVisibility(passwordInput, togglePassword));
+}
+if (toggleConfirm) {
+  toggleConfirm.addEventListener('click', () => toggleVisibility(confirmInput, toggleConfirm));
+}
+  
+</script>
+</body>
+</html>

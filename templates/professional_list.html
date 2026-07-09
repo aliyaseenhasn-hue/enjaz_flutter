@@ -1,0 +1,247 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>إنجاز – {{ profession_title }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <style>
+    .page-header {
+      padding: 20px 20px 0;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    
+    .page-header h1 { font-size: 1.4rem; font-weight: 800; }
+    .page-header h1 span { color: #e08e2e; }
+    .page-header p { color: #64748b; font-size: 0.85rem; margin-top: 4px; }
+    
+    .location-bar {
+      max-width: 1100px;
+      margin: 12px auto 0;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .location-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #fef3c7;
+      color: #b45309;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border: 1px solid #fde68a;
+    }
+    
+    .location-badge i { font-size: 0.9rem; }
+    .location-badge.inactive { background: #f1f5f9; color: #64748b; border-color: #e2e8f0; }
+    .location-badge.inactive i { color: #94a3b8; }
+    
+    .btn-get-location {
+      background: white;
+      border: 2px solid #e08e2e;
+      color: #e08e2e;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Tajawal', sans-serif;
+      transition: all 0.2s;
+    }
+    
+    .btn-get-location:hover { background: #fef7e6; }
+    
+    .professionals-grid {
+      max-width: 1100px;
+      margin: 16px auto 0;
+      padding: 0 16px 90px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    
+    @media (max-width: 480px) {
+      .professionals-grid { grid-template-columns: 1fr; padding: 0 12px 90px; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<button class="back-btn" onclick="window.history.length > 1 ? window.history.back() : window.location.href='/service-requests/'">
+  <i class="fa-solid fa-arrow-right"></i>
+  العودة
+</button>
+
+<main>
+  <div class="page-header">
+    <h1>المحترفون في: <span>{{ profession_title }}</span></h1>
+    <p>اختر المناسب لك وتواصل معه مباشرة</p>
+  </div>
+
+  <div class="location-bar">
+    {% if has_location %}
+      <div class="location-badge">
+        <i class="fa-solid fa-location-dot"></i>
+        مرتب حسب الأقرب إليك
+      </div>
+    {% else %}
+      <div class="location-badge inactive">
+        <i class="fa-solid fa-location-dot"></i>
+        الموقع غير محدد
+      </div>
+      <button class="btn-get-location" onclick="requestLocationAndReload()">
+        <i class="fa-solid fa-crosshairs"></i>
+        تحديد موقعي
+      </button>
+    {% endif %}
+  </div>
+
+  <div class="professionals-grid">
+    {% for pro in professionals %}
+    <div class="pro-card" onclick="goToDetail({{ pro.id }})">
+      <div class="pro-header">
+        <div class="pro-avatar">
+          {% if pro.avatar %}<img src="{{ pro.avatar }}" alt="{{ pro.name }}">{% else %}<i class="fa-regular fa-user"></i>{% endif %}
+        </div>
+        <div class="pro-info">
+          <div class="pro-name">{{ pro.name }}</div>
+          <div class="pro-tagline">{{ pro.profession_display }}</div>
+        </div>
+      </div>
+
+      {% if pro.bio %}
+        <p class="pro-bio">{{ pro.bio }}</p>
+      {% endif %}
+
+      <div class="pro-meta">
+        <div class="pro-rating">
+          <i class="fa-solid fa-star"></i>
+          {{ pro.rating|floatformat:1 }}
+          <span>({{ pro.reviews_count }} تقييم)</span>
+        </div>
+        {% if pro.is_available %}
+          <span class="status-badge available">متاح الآن</span>
+        {% else %}
+          <span class="status-badge busy">غير متاح</span>
+        {% endif %}
+      </div>
+
+      <div class="pro-location">
+        <span><i class="fa-solid fa-location-dot"></i>{{ pro.city|default:"الموقع غير محدد" }}</span>
+        {% if pro.distance is not None %}
+          <span class="distance-badge {% if pro.distance > 20 %}far{% endif %}" style="background:#e08e2e; color:white; padding:3px 12px; border-radius:30px; font-size:0.75rem; font-weight:700;">
+            <i class="fa-solid fa-road"></i>
+            {{ pro.distance }} كم
+          </span>
+        {% endif %}
+      </div>
+
+      {% if pro.service_min_price %}
+        <div class="pro-price">
+          <i class="fa-solid fa-money-bill-wave"></i>
+          <span>نطاق السعر:</span>
+          <span class="pro-price-val">{{ pro.service_min_price|floatformat:0 }} – {{ pro.service_max_price|floatformat:0 }} د.ع</span>
+        </div>
+      {% else %}
+        <div class="pro-price">
+          <i class="fa-solid fa-handshake"></i>
+          <span>السعر حسب الاتفاق</span>
+        </div>
+      {% endif %}
+
+      <button class="btn-request-service" onclick="event.stopPropagation(); requestService({{ pro.id }}, '{{ pro.name|escapejs }}')">
+        <i class="fa-solid fa-paper-plane"></i>
+        طلب الخدمة
+      </button>
+    </div>
+    {% empty %}
+    <div class="empty-state" style="grid-column: 1 / -1;">
+      <div class="empty-state-icon">😔</div>
+      <h3>لا يوجد مهنيون معتمدون</h3>
+      <p>لا يوجد مهنيون معتمدون في هذا التخصص حالياً.<br>جرب تخصصات أخرى أو عد لاحقاً.</p>
+    </div>
+    {% endfor %}
+  </div>
+</main>
+
+<!-- ═══ الشريط السفلي ═══ -->
+<nav class="bottom-tab-bar">
+  <a href="/profileuser/" class="tab-item"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+  <a href="/service-requests/" class="tab-item active"><i class="fa-solid fa-briefcase"></i><span>دليل المهن</span></a>
+  <a href="/create-request/" class="tab-item"><i class="fa-solid fa-plus-circle"></i><span>طلب جديد</span></a>
+  <a href="/create-request/?tab=tracking" class="tab-item"><i class="fa-solid fa-list-check"></i><span>طلباتي</span></a>
+  <a href="/chat/" class="tab-item"><i class="fa-solid fa-envelope"></i><span>الرسائل</span></a>
+  <a href="/settings/" class="tab-item"><i class="fa-solid fa-user"></i><span>حسابي</span></a>
+</nav>
+
+<script>
+(function () {
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasLatInUrl = urlParams.has('lat') && urlParams.has('lon');
+
+  if (!hasLatInUrl) {
+    const locationEnabled = localStorage.getItem('location_enabled') === 'true';
+    const savedLat = localStorage.getItem('user_lat');
+    const savedLon = localStorage.getItem('user_lon');
+
+    if (locationEnabled && savedLat && savedLon) {
+      const newUrl = window.location.pathname + '?lat=' + savedLat + '&lon=' + savedLon;
+      window.location.replace(newUrl);
+      return;
+    }
+  }
+
+  window.goToDetail = function (proId) {
+    const coords = getStoredCoords();
+    let url = '/professional-detail/' + proId + '/';
+    if (coords) url += '?lat=' + coords.lat + '&lon=' + coords.lon;
+    window.location.href = url;
+  };
+
+  window.requestService = function (proId, proName) {
+    const token = localStorage.getItem('enjaz_pwa_token');
+    if (!token) {
+      if (confirm('يجب تسجيل الدخول أولاً.')) window.location.href = '/singin/';
+      return;
+    }
+    const coords = getStoredCoords();
+    let url = '/create-request/?pro_id=' + encodeURIComponent(proId) + '&pro_name=' + encodeURIComponent(proName);
+    if (coords) url += '&lat=' + coords.lat + '&lon=' + coords.lon;
+    window.location.href = url;
+  };
+
+  window.requestLocationAndReload = function () {
+    if (!navigator.geolocation) { alert('المتصفح لا يدعم الموقع'); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude, lon = pos.coords.longitude;
+        localStorage.setItem('user_lat', lat);
+        localStorage.setItem('user_lon', lon);
+        localStorage.setItem('location_enabled', 'true');
+        window.location.replace(window.location.pathname + '?lat=' + lat + '&lon=' + lon);
+      },
+      () => { alert('فشل تحديد الموقع.'); }
+    );
+  };
+
+  function getStoredCoords() {
+    const lat = localStorage.getItem('user_lat') || new URLSearchParams(window.location.search).get('lat');
+    const lon = localStorage.getItem('user_lon') || new URLSearchParams(window.location.search).get('lon');
+    return (lat && lon) ? { lat, lon } : null;
+  }
+})();
+</script>
+</body>
+</html>

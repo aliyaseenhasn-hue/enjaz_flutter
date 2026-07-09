@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Enjaz</string>
+    <string name="title_activity_main">Enjaz</string>
+    <string name="package_name">com.enjaz.app</string>
+    <string name="custom_url_scheme">com.enjaz.app</string>
+</resources>

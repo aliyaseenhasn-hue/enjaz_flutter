@@ -1,0 +1,47 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إضافة صورة إنجاز</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <style>
+        .container { max-width: 600px; margin: 2rem auto; }
+        .card { background: white; border-radius: 28px; padding: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; font-weight: 700; margin-bottom: 0.5rem; color: #374151; }
+        input, textarea { width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 16px; font-family: 'Tajawal', sans-serif; }
+        .btn { padding: 0.75rem 1.5rem; border-radius: 40px; font-weight: 700; cursor: pointer; border: none; }
+        .btn-primary { background: #10b981; color: white; }
+        .btn-secondary { background: #f3f4f6; color: #374151; margin-right: 1rem; }
+        .errorlist { color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h2>📸 إضافة صورة إنجاز</h2>
+        <p>قم برفع صورة توضح أحد أعمالك لتظهر للعملاء.</p>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_image">الصورة:</label>
+                {{ form.image }}
+                {{ form.image.errors }}
+            </div>
+            <div class="form-group">
+                <label for="id_caption">الوصف (اختياري):</label>
+                {{ form.caption }}
+            </div>
+            <button type="submit" class="btn btn-primary">رفع الصورة</button>
+            <a href="{% url 'profile-mhn' %}" class="btn btn-secondary">إلغاء</a>
+        </form>
+    </div>
+</div>
+</body>
+</html>

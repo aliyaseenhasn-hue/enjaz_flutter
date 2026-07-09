@@ -1,0 +1,357 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>إنجاز – تفاصيل الطلب</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        .page-container { max-width: 700px; margin: 0 auto; padding: 0 16px 90px; }
+        
+        .card {
+            background: white;
+            border-radius: 28px;
+            padding: 24px 20px;
+            margin-bottom: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+            gap: 12px;
+        }
+        
+        .info-row:last-child { border-bottom: none; }
+        .info-label { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 700; color: #64748b; min-width: 130px; }
+        .info-label i { color: #0d9488; }
+        .info-value { font-size: 0.9rem; font-weight: 700; color: #0f172a; text-align: right; flex: 1; }
+        .map-link { color: #0d9488; text-decoration: none; font-weight: 700; }
+        .map-link:hover { color: #0f766e; text-decoration: underline; }
+        .status-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+        
+        .loading::before {
+            content: '';
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #0d9488;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error-msg { text-align: center; padding: 40px; color: #ef4444; }
+    </style>
+</head>
+<body>
+
+<button class="back-btn" onclick="window.history.back()" style="margin:16px;">
+    <i class="fa-solid fa-arrow-right"></i>
+    العودة
+</button>
+
+<div class="page-container">
+    <div class="card">
+        <div id="request-details">
+            <div class="loading">جاري تحميل تفاصيل الطلب...</div>
+        </div>
+    </div>
+</div>
+
+<nav class="bottom-tab-bar">
+    <a href="/profileuser/" class="tab-item"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+    <a href="/service-requests/" class="tab-item"><i class="fa-solid fa-briefcase"></i><span>دليل المهن</span></a>
+    <a href="/create-request/" class="tab-item"><i class="fa-solid fa-plus-circle"></i><span>طلب جديد</span></a>
+    <a href="/create-request/?tab=tracking" class="tab-item"><i class="fa-solid fa-list-check"></i><span>طلباتي</span></a>
+    <a href="/chat/" class="tab-item"><i class="fa-solid fa-envelope"></i><span>الرسائل</span></a>
+    <a href="/settings/" class="tab-item"><i class="fa-solid fa-gear"></i><span>حسابي</span></a>
+</nav>
+
+<script>
+(function () {
+    const token = localStorage.getItem('enjaz_pwa_token');
+    if (!token) window.location.href = '/singin/';
+
+    const requestId = window.location.pathname.split('/').filter(p => p).pop();
+    let currentUserId = null;
+    const currentUserRole = localStorage.getItem('enjaz_user_role');
+
+    async function fetchCurrentUserId() {
+        if (localStorage.getItem('user_id')) return localStorage.getItem('user_id');
+        try {
+            const res = await fetch('/api/auth/profile/', { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
+            if (data.id) { localStorage.setItem('user_id', data.id); return data.id; }
+        } catch (e) {}
+        return null;
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('ar-IQ', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    function initMap(lat, lon, elementId) {
+        if (!lat || !lon) return;
+        const map = L.map(elementId).setView([lat, lon], 14);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+        }).addTo(map);
+        L.marker([lat, lon]).addTo(map);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]);
+    }
+
+    function renderTimeline(req) {
+        const stages = [
+            { key: 'pending', title: 'قيد الانتظار', desc: 'بانتظار موافقة مهني على الطلب.' },
+            { key: 'in_progress', title: 'قيد التنفيذ', desc: 'تم قبول الطلب وجاري العمل.' },
+            { key: 'completed', title: 'مكتمل', desc: 'تم إنجاز الطلب بنجاح.' },
+            { key: 'cancelled', title: 'ملغي', desc: 'تم إلغاء الطلب.' }
+        ];
+
+        if (req.status === 'cancelled') {
+            const stage = stages.find(x => x.key === 'cancelled');
+            return `
+                <div class="timeline">
+                    <div class="timeline-item completed active">
+                        <div class="timeline-icon" style="background-color: #ef4444; border-color: #fee2e2;"></div>
+                        <div class="timeline-content">
+                            <div class="timeline-title" style="color: #ef4444;">${stage.title}</div>
+                            <div class="timeline-desc">${stage.desc}</div>
+                            <div class="timeline-date">(الحالة النهائية)</div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        let html = '<div class="timeline">';
+        const activeOrder = ['pending', 'in_progress', 'completed'];
+        let found = false;
+
+        for (const s of activeOrder) {
+            const stage = stages.find(x => x.key === s);
+            const isCompleted = req.status === 'completed' && s !== 'completed' ? true : (s === req.status);
+            const isActive = s === req.status;
+
+            if (isActive) found = true;
+            if (!found && s !== req.status && s !== 'completed') continue;
+
+            html += `
+                <div class="timeline-item ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}">
+                    <div class="timeline-icon"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-title">${stage.title}</div>
+                        <div class="timeline-desc">${stage.desc}</div>
+                        ${isActive ? '<div class="timeline-date">(المرحلة الحالية)</div>' : ''}
+                    </div>
+                </div>`;
+            if (isActive) break;
+        }
+        html += '</div>';
+        return html;
+    }
+
+    async function updateRequestStatus(status, comment, finalPrice) {
+        try {
+            const payload = { status };
+            if (comment) payload.comment = comment;
+            if (finalPrice) payload.final_price = parseInt(finalPrice);
+            const res = await fetch(`/api/services/agent/update/${requestId}/`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                alert('✅ تم تحديث الحالة بنجاح');
+                loadRequestDetails();
+            } else {
+                const err = await res.json();
+                alert('❌ ' + (err.error || err.detail));
+            }
+        } catch (e) { alert('❌ فشل الاتصال'); }
+    }
+
+    async function loadRequestDetails() {
+        const container = document.getElementById('request-details');
+        if (!requestId || isNaN(requestId)) {
+            container.innerHTML = '<div class="error-msg">معرّف الطلب غير صحيح</div>';
+            return;
+        }
+        try {
+            const res = await fetch(`/api/services/requests/${requestId}/`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.status === 404) { container.innerHTML = '<div class="error-msg">الطلب غير موجود</div>'; return; }
+            if (!res.ok) throw new Error();
+            const req = await res.json();
+            currentUserId = await fetchCurrentUserId();
+
+            let html = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h2 style="font-size:1.2rem; font-weight:800; color:#0f172a;">${escapeHtml(req.title)}</h2>
+                    <span class="status-badge ${req.status}">${escapeHtml(req.status_display || req.status)}</span>
+                </div>
+                <div class="info-row"><span class="info-label">📝 التفاصيل</span><span class="info-value">${escapeHtml(req.details || '—')}</span></div>
+                <div class="info-row"><span class="info-label">💰 الميزانية</span><span class="info-value">${req.estimated_price ? Number(req.estimated_price).toLocaleString() + ' د.ع' : 'غير محدد'}</span></div>
+                ${req.final_price ? `<div class="info-row"><span class="info-label">💵 السعر النهائي</span><span class="info-value" style="color:#22c55e;">${Number(req.final_price).toLocaleString()} د.ع</span></div>` : ''}
+                <div class="info-row"><span class="info-label">📅 التاريخ</span><span class="info-value">${formatDate(req.created_at)}</span></div>
+                <div class="info-row"><span class="info-label">👤 صاحب الطلب</span><span class="info-value">${escapeHtml(req.customer?.full_name || 'غير معروف')}</span></div>
+                ${req.agent ? `<div class="info-row"><span class="info-label">👨‍🔧 المهني</span><span class="info-value" style="color:#0d9488;">${escapeHtml(req.agent.full_name)}</span></div>` : ''}`;
+
+            if (req.lat && req.lon) {
+                html += `<div class="info-row"><span class="info-label">📍 الموقع</span><span class="info-value"><a href="https://www.google.com/maps?q=${req.lat},${req.lon}" target="_blank" class="map-link"><i class="fa-solid fa-map"></i> عرض على الخريطة</a></span></div>`;
+                html += `<div id="map" class="map-container" style="height: 200px; border-radius: 16px; margin-top: 12px; border: 1px solid #e2e8f0;"></div>`;
+            } else if (req.location) {
+                html += `<div class="info-row"><span class="info-label">📍 الموقع</span><span class="info-value">${escapeHtml(req.location)}</span></div>`;
+            }
+
+            html += `<div class="section-title" style="margin:20px 0 12px;"><i class="fa-solid fa-route" style="color:#0d9488; margin-left:8px;"></i>مراحل الطلب</div>`;
+            html += renderTimeline(req);
+
+            container.innerHTML = html;
+            if (req.lat && req.lon) initMap(req.lat, req.lon, 'map');
+
+            if (currentUserRole === 'agent' && req.agent && req.agent.id == currentUserId && (req.status === 'in_progress' || req.status === 'completed')) {
+                const phone = req.customer_phone || (req.customer && req.customer.phone_number);
+                if (phone) {
+                    const btn = document.createElement('a');
+                    btn.href = 'https://wa.me/' + phone.replace(/\D/g, '');
+                    btn.target = '_blank';
+                    btn.className = 'whatsapp-btn';
+                    btn.innerHTML = '<i class="fab fa-whatsapp"></i> تواصل مع العميل';
+                    container.appendChild(btn);
+                }
+            }
+
+            if (currentUserRole === 'agent' && req.agent && req.agent.id == currentUserId && req.status !== 'completed' && req.status !== 'cancelled') {
+                const div = document.createElement('div');
+                div.className = 'status-buttons';
+                div.innerHTML = `
+                    <button class="btn-accept-request" data-status="in_progress"><i class="fa-solid fa-play"></i> بدء التنفيذ</button>
+                    <button class="btn-accept-request" data-status="completed"><i class="fa-solid fa-check-circle"></i> إكمال الطلب</button>
+                    <button class="btn-reject-request" data-status="cancelled"><i class="fa-solid fa-ban"></i> إلغاء</button>`;
+                container.appendChild(div);
+                div.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        const newStatus = btn.dataset.status;
+                        let comment = prompt('ملاحظة (اختياري):', '');
+                        let finalPrice = null;
+                        if (newStatus === 'completed') {
+                            finalPrice = prompt('المبلغ النهائي (د.ع):');
+                            if (!finalPrice || isNaN(finalPrice)) { alert('أدخل مبلغاً صحيحاً'); return; }
+                        }
+                        await updateRequestStatus(newStatus, comment, finalPrice);
+                    });
+                });
+            }
+
+            if (currentUserRole === 'customer' && (req.status === 'pending' || req.status === 'in_progress')) {
+                const div = document.createElement('div');
+                div.className = 'status-buttons';
+                div.innerHTML = `<button class="btn-reject-request" id="custCancelBtn" style="background-color:#ef4444;"><i class="fa-solid fa-ban"></i> إلغاء الطلب</button>`;
+                container.appendChild(div);
+                div.querySelector('#custCancelBtn').addEventListener('click', async () => {
+                    if (confirm('هل أنت متأكد من إلغاء الطلب؟')) {
+                        try {
+                            const res = await fetch(`/api/services/requests/${requestId}/cancel/`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            if (res.ok) { alert('✅ تم إلغاء الطلب بنجاح'); loadRequestDetails(); }
+                            else { const err = await res.json(); alert('❌ ' + (err.error || 'فشل الإلغاء')); }
+                        } catch(e) { alert('❌ خطأ في الاتصال'); }
+                    }
+                });
+            }
+
+            if (currentUserRole === 'customer' && req.status === 'completed' && !req.review) {
+                showRatingOverlay(req.id);
+            }
+        } catch (e) { container.innerHTML = '<div class="error-msg">فشل تحميل تفاصيل الطلب</div>'; }
+    }
+
+    function showRatingOverlay(requestId) {
+        if (document.querySelector('.rating-overlay')) return;
+        document.body.style.overflow = 'hidden';
+        const overlay = document.createElement('div');
+        overlay.className = 'rating-overlay';
+        overlay.innerHTML = `
+            <div class="rating-card">
+                <h3>⭐ قيم تجربتك</h3>
+                <p>كيف تقيم أداء المهني؟</p>
+                <div class="stars">
+                    <i class="star far fa-star" data-value="1"></i>
+                    <i class="star far fa-star" data-value="2"></i>
+                    <i class="star far fa-star" data-value="3"></i>
+                    <i class="star far fa-star" data-value="4"></i>
+                    <i class="star far fa-star" data-value="5"></i>
+                </div>
+                <textarea id="reviewComment" class="rating-comment" placeholder="اكتب تعليقاً اختيارياً..."></textarea>
+                <button id="submitRating" class="rating-submit">إرسال التقييم</button>
+            </div>`;
+        document.body.appendChild(overlay);
+        let selectedRating = 0;
+        const stars = overlay.querySelectorAll('.star');
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                selectedRating = parseInt(star.dataset.value);
+                stars.forEach(s => {
+                    s.className = parseInt(s.dataset.value) <= selectedRating ? 'star fas fa-star active' : 'star far fa-star';
+                });
+            });
+        });
+        overlay.querySelector('#submitRating').addEventListener('click', async () => {
+            if (selectedRating === 0) { alert('اختر تقييم أولاً'); return; }
+            const comment = overlay.querySelector('#reviewComment').value.trim();
+            const btn = overlay.querySelector('#submitRating');
+            btn.disabled = true;
+            btn.textContent = 'جاري الإرسال...';
+            try {
+                const res = await fetch(`/api/services/requests/${requestId}/review/`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rating: selectedRating, comment })
+                });
+                if (res.ok) {
+                    alert('شكراً لتقييمك! ⭐');
+                    overlay.remove();
+                    document.body.style.overflow = '';
+                    loadRequestDetails();
+                } else {
+                    const err = await res.json();
+                    alert('خطأ: ' + (err.detail || 'فشل'));
+                }
+            } catch (e) { alert('فشل الاتصال'); }
+            btn.disabled = false;
+            btn.textContent = 'إرسال التقييم';
+        });
+    }
+
+    loadRequestDetails();
+})();
+</script>
+</body>
+</html>

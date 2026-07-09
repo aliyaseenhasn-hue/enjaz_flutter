@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شات الذكاء الاصطناعي</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f5f7fb;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .chat-header {
+            background-color: #007aff;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .chat-container {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .message {
+            max-width: 75%;
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background-color: #007aff;
+            color: white;
+            align-self: flex-start;
+            border-bottom-right-radius: 4px;
+        }
+        .ai-message {
+            background-color: #e5e5ea;
+            color: black;
+            align-self: flex-end;
+            border-bottom-left-radius: 4px;
+            white-space: pre-line;
+        }
+        .chat-input-area {
+            padding: 10px;
+            background-color: white;
+            border-top: 1px solid #e5e5ea;
+            display: flex;
+            gap: 10px;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom)); /* مناسب للآيفون */
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 22px;
+            font-size: 16px;
+            outline: none;
+        }
+        .chat-input-area button {
+            background-color: #007aff;
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 22px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .chat-input-area button:disabled {
+            background-color: #a2a2a2;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-header">مساعد إنجاز الذكي</div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="message ai-message">مرحباً بك! كيف يمكنني مساعدتك اليوم؟</div>
+    </div>
+
+    <div class="chat-input-area">
+        <input type="text" id="userInput" placeholder="اكتب رسالتك هنا..." onkeypress="handleKeyPress(event)">
+        <button id="sendBtn" onclick="sendMessage()">إرسال</button>
+    </div>
+
+    <script>
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        function appendMessage(text, isUser) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('message');
+            msgDiv.classList.add(isUser ? 'user-message' : 'ai-message');
+            msgDiv.textContent = text;
+            chatContainer.appendChild(msgDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight; // التمرير للأسفل تلقائياً
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            // عرض رسالة المستخدم وقفل الإدخال
+            appendMessage(text, true);
+            userInput.value = '';
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+
+            // عرض مؤشر جاري الكتابة مؤقتاً
+            const loadingDiv = document.createElement('div');
+            loadingDiv.classList.add('message', 'ai-message');
+            loadingDiv.textContent = 'جاري التفكير...';
+            chatContainer.appendChild(loadingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            try {
+                // إرسال الرسالة إلى دجانجو View الخلفي عبر الـ AJAX
+                // داخل ملف chatai.html ابحث عن هذا السطر وعدله ليصبح:
+const response = await fetch('/ai-chat/', {  // تأكد من إضافة ai- قبل chat
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: text })
+});
+
+                
+                const data = await response.json();
+                chatContainer.removeChild(loadingDiv); // حذف كلمة جاري التفكير
+
+                if (data.status === 'success') {
+                    appendMessage(data.reply, false);
+                } else {
+                    appendMessage('عذراً، حدث خطأ أثناء الاتصال بالخادم.', false);
+                }
+            } catch (error) {
+                chatContainer.removeChild(loadingDiv);
+                appendMessage('فشل الاتصال بالإنترنت.', false);
+            }
+
+            // إعادة تفعيل الإدخال
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+            userInput.focus();
+        }
+    </script>
+</body>
+</html>
+

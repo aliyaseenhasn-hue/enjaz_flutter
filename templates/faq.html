@@ -1,0 +1,510 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنجاز - الأسئلة الشائعة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 24px 20px;
+            border-radius: 0 0 28px 28px;
+            text-align: center;
+        }
+        
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        
+        .page-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .search-box {
+            margin: -20px 16px 24px;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 16px 50px 16px 16px;
+            border: none;
+            border-radius: var(--radius-xl);
+            font-size: 16px;
+            background: var(--bg-card);
+            box-shadow: var(--shadow-lg);
+            direction: rtl;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+        
+        .quick-links {
+            display: flex;
+            gap: 10px;
+            padding: 0 16px 20px;
+            overflow-x: auto;
+        }
+        
+        .quick-link {
+            padding: 8px 16px;
+            background: var(--primary-muted);
+            color: var(--primary-dark);
+            border-radius: var(--radius-full);
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            text-decoration: none;
+            transition: var(--transition);
+            border: 1px solid var(--primary-light);
+        }
+        
+        .quick-link:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .faq-list {
+            padding: 0 16px 100px;
+        }
+        
+        .faq-category {
+            margin-bottom: 24px;
+        }
+        
+        .category-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .category-title i {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+        
+        .faq-item {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        
+        .faq-item:hover {
+            border-color: var(--primary-light);
+        }
+        
+        .faq-question {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            transition: var(--transition);
+        }
+        
+        .faq-question:hover {
+            background: var(--primary-muted);
+        }
+        
+        .faq-question i {
+            color: var(--primary);
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+        
+        .faq-item.open .faq-question i {
+            transform: rotate(180deg);
+        }
+        
+        .faq-answer {
+            display: none;
+            padding: 0 20px 20px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+        
+        .faq-item.open .faq-answer {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .faq-answer p {
+            margin-bottom: 12px;
+        }
+        
+        .faq-answer ul {
+            padding-right: 20px;
+            margin-bottom: 12px;
+        }
+        
+        .faq-answer li {
+            margin-bottom: 6px;
+        }
+        
+        .highlight-box {
+            background: var(--sky-light);
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            margin-top: 12px;
+            border-right: 4px solid var(--sky);
+        }
+        
+        .contact-box {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 24px;
+            border-radius: var(--radius-xl);
+            margin: 20px 16px;
+            text-align: center;
+        }
+        
+        .contact-box h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .contact-box p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+        
+        .contact-box .btn {
+            background: white;
+            color: var(--primary);
+            font-weight: 700;
+        }
+        
+        .contact-box .btn:hover {
+            background: var(--primary-muted);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1>❓ الأسئلة الشائعة</h1>
+    <p>إجابات على أكثر الأسئلة شيوعاً</p>
+</div>
+
+<div class="search-box">
+    <i class="fa-solid fa-search"></i>
+    <input type="text" id="searchInput" placeholder="ابحث عن سؤالك...">
+</div>
+
+<div class="quick-links">
+    <a href="#" class="quick-link" data-category="requests">📝 تقديم طلب</a>
+    <a href="#" class="quick-link" data-category="payments">💰 الدفع</a>
+    <a href="#" class="quick-link" data-category="quality">✅ الجودة</a>
+    <a href="#" class="quick-link" data-category="problems">⚠️ المشاكل</a>
+</div>
+
+<div id="faqList" class="faq-list">
+    <!-- الأسئلة الشائعة -->
+</div>
+
+<div class="contact-box">
+    <h3>لم تجد إجابة لسؤالك؟</h3>
+    <p>فريقنا جاهز لمساعدتك على مدار الساعة</p>
+    <a href="/support/" class="btn">
+        <i class="fa-solid fa-headset"></i>
+        تواصل معنا
+    </a>
+</div>
+
+<nav class="bottom-tab-bar">
+    <a href="/profileuser/" class="tab-item"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+    <a href="/service-requests/" class="tab-item"><i class="fa-solid fa-briefcase"></i><span>دليل المهن</span></a>
+    <a href="/create-request/" class="tab-item"><i class="fa-solid fa-plus-circle"></i><span>طلب جديد</span></a>
+    <a href="/create-request/?tab=tracking" class="tab-item"><i class="fa-solid fa-list-check"></i><span>طلباتي</span></a>
+    <a href="/chat/" class="tab-item"><i class="fa-solid fa-envelope"></i><span>الرسائل</span></a>
+    <a href="/settings/" class="tab-item"><i class="fa-solid fa-gear"></i><span>حسابي</span></a>
+</nav>
+
+<script>
+(function() {
+    // بيانات الأسئلة الشائعة
+    const faqData = [
+        {
+            category: 'تقديم الطلبات',
+            icon: 'fa-file-pen',
+            questions: [
+                {
+                    q: 'كيف أقدم طلب خدمة؟',
+                    a: `<p>لتقديم طلب خدمة جديد، اتبع الخطوات التالية:</p>
+                        <ul>
+                            <li>اضغط على زر "طلب جديد" في الشريط السفلي</li>
+                            <li>اختر نوع الخدمة المطلوبة من قائمة التصنيفات</li>
+                            <li>املأ تفاصيل الطلب (الوصف، الميزانية، الموقع)</li>
+                            <li>اضغط على "إرسال الطلب" وانتظر رد المهنيين</li>
+                        </ul>`
+                },
+                {
+                    q: 'كم يستغرق الرد على طلبي؟',
+                    a: `<p>يعتمد وقت الرد على نوع الخدمة وموقعك الجغرافي. بشكل عام:</p>
+                        <ul>
+                            <li>الخدمات العادية: خلال 1-3 ساعات</li>
+                            <li>الخدمات العاجلة: خلال 30 دقيقة</li>
+                            <li>الخدمات المتخصصة: قد يستغرق 24 ساعة</li>
+                        </ul>
+                        <div class="highlight-box">
+                            <strong>💡 نصيحة:</strong> قدم تفاصيل واضحة في طلبك للحصول على ردود أسرع وأكثر دقة
+                        </div>`
+                },
+                {
+                    q: 'هل يمكنني تعديل طلبي بعد إرساله؟',
+                    a: `<p>نعم، يمكنك تعديل طلبك في الحالات التالية:</p>
+                        <ul>
+                            <li>قبل قبول أي مهني للطلب</li>
+                            <li>بعد قبول الطلب ولكن قبل بدء العمل</li>
+                        </ul>
+                        <p>لتعديل الطلب، تواصل مع المهني المعتمد عبر الرسائل.</p>`
+                }
+            ]
+        },
+        {
+            category: 'الدفع والأسعار',
+            icon: 'fa-money-bill-transfer',
+            questions: [
+                {
+                    q: 'ما هي طرق الدفع المتاحة؟',
+                    a: `<p>نوفر حالياً عدة طرق للدفع:</p>
+                        <ul>
+                            <li><strong>الدفع النقدي:</strong> مباشرة للمهني بعد إتمام العمل</li>
+                            <li><strong>التحويل البنكي:</strong> للحسابات المصرفية المعتمدة</li>
+                            <li><strong>محفظة إنجاز:</strong> للمبالغ المحفوظة في حسابك</li>
+                        </ul>
+                        <p> قريباً سيتم إضافة الدفع بالبطاقات البنكية.</p>`
+                },
+                {
+                    q: 'هل الأسعار نهائية أم قابلة للتفاوض؟',
+                    a: `<p>الأسعار المذكورة في الطلب هي أسعار استرشادية:</p>
+                        <ul>
+                            <li>الميزانية التي تحددها هي الحد الأقصى المقبول</li>
+                            <li>المهني قد يقدم سعراً أقل حسب طبيعة العمل</li>
+                            <li>يمكنك التفاوض مع المهني قبل قبول العرض</li>
+                        </ul>
+                        <div class="highlight-box">
+                            <strong>⚠️ تنبيه:</strong> لا تدفع أي مبلغ قبل التأكد من قبولك للعرض بشكل نهائي
+                        </div>`
+                },
+                {
+                    q: 'متى أدفع للمهني؟',
+                    a: `<p>نوصي بالنظام التالي:</p>
+                        <ul>
+                            <li><strong>30%</strong> كعربون قبل بدء العمل (للطلبات الكبيرة)</li>
+                            <li><strong>70%</strong> عند إتمام العمل والتأكد من جودته</li>
+                        </ul>
+                        <p>لا تدفع المبلغ الكامل مسبقاً إلا إذا كنت تثق بالمهني.</p>`
+                }
+            ]
+        },
+        {
+            category: 'ضمان الجودة',
+            icon: 'fa-shield-halved',
+            questions: [
+                {
+                    q: 'كيف أضمن جودة العمل؟',
+                    a: `<p>نوفر عدة ضمانات للجودة:</p>
+                        <ul>
+                            <li><strong>التقييمات:</strong> اقرأ تقييمات العملاء السابقين</li>
+                            <li><strong>المحفظة:</strong> شاهد أعمال المهني السابقة</li>
+                            <li><strong>المهلة:</strong> أعطِ نفسك وقتاً لمراجعة العمل</li>
+                            <li><strong>البلاغ:</strong> أبلغ عن أي مشكلة عبر النموذج المخصص</li>
+                        </ul>`
+                },
+                {
+                    q: 'ماذا أفعل إذا كان العمل غير satisfactory؟',
+                    a: `<p>إذا لم تكن راضياً عن العمل:</p>
+                        <ol>
+                            <li>تواصل مع المهني واشرح المشكلة بوضوح</li>
+                            <li>اطلب تصحيح العمل أو إعادة التنفيذ</li>
+                            <li>إذا لم يتم الحل، قدم بلاغ عبر صفحة الدعم</li>
+                            <li>سيتم مراجعة البلاغ والتواصل معك خلال 24 ساعة</li>
+                        </ol>`
+                },
+                {
+                    q: 'هل هناك ضمان على الخدمات؟',
+                    a: `<p>نعم، نقدم ضمانات مختلفة حسب نوع الخدمة:</p>
+                        <ul>
+                            <li><strong>الخدمات العادية:</strong> ضمان 7 أيام</li>
+                            <li><strong>الخدمات الكهربائية:</strong> ضمان 30 يوم</li>
+                            <li><strong>الخدمات المميزة:</strong> ضمان 60 يوم</li>
+                        </ul>
+                        <p>خلال فترة الضمان،سيتم إصلاح أي خلل دون تكلفة إضافية.</p>`
+                }
+            ]
+        },
+        {
+            category: 'المشاكل والبلاغات',
+            icon: 'fa-triangle-exclamation',
+            questions: [
+                {
+                    q: 'كيف أقدم بلاغ؟',
+                    a: `<p>للتقديم بلاغ:</p>
+                        <ol>
+                            <li>اذهب إلى صفحة "الدعم والبلاغات"</li>
+                            <li>اختر نوع المشكلة من القائمة</li>
+                            <li>اكتب تفاصيل المشكلة بشكل واضح</li>
+                            <li>أرفق أي أدلة (صور، محادثات)</li>
+                            <li>اضغط على "إرسال البلاغ"</li>
+                        </ol>
+                        <p>سيتم مراجعة بلاغك خلال 24-48 ساعة.</p>`
+                },
+                {
+                    q: 'ما أنواع البلاغات المتاحة؟',
+                    a: `<p>نوفر عدة أنواع من البلاغات:</p>
+                        <ul>
+                            <li>الخدمة غير مكتملة</li>
+                            <li>عدم الالتزام بالموعد</li>
+                            <li>سوء المعاملة</li>
+                            <li>احتيال أو نصب</li>
+                            <li>محتوى مخالف</li>
+                            <li>مشكلة تقنية</li>
+                        </ul>`
+                },
+                {
+                    q: 'ماذا يحدث بعد تقديم البلاغ؟',
+                    a: `<p>بعد تقديم البلاغ:</p>
+                        <ol>
+                            <li>ستصلك رسالة تأكيد باستلام البلاغ</li>
+                            <li>يتم التواصل مع الطرف الآخر</li>
+                            <li>نبحث في المشكلة ونحلل الأدلة</li>
+                            <li>نصل لحل عادل بين الطرفين</li>
+                            <li>نخبرك بالنتيجة والإجراء المتخذ</li>
+                        </ol>`
+                }
+            ]
+        },
+        {
+            category: 'حسابي',
+            icon: 'fa-user-gear',
+            questions: [
+                {
+                    q: 'كيف أغير معلومات حسابي؟',
+                    a: `<p>لتعديل معلومات حسابك:</p>
+                        <ol>
+                            <li>اضغط على "حسابي" في الشريط السفلي</li>
+                            <li>اختر "الإعدادات"</li>
+                            <li>يمكنك تعديل: الاسم، الهاتف، كلمة المرور</li>
+                            <li>لا تنسَ حفظ التغييرات</li>
+                        </ol>`
+                },
+                {
+                    q: 'نسيت كلمة المرور، ماذا أفعل؟',
+                    a: `<p>لاستعادة كلمة المرور:</p>
+                        <ol>
+                            <li>اضغط على "نسيت كلمة المرور" في صفحة تسجيل الدخول</li>
+                            <li>أدخل رقم هاتفك المسجل</li>
+                            <li>ستصلك رسالة نصية برابط الاستعادة</li>
+                            <li>اضغط على الرابط وأنشئ كلمة مرور جديدة</li>
+                        </ol>`
+                },
+                {
+                    q: 'كيف أحذف حسابي؟',
+                    a: `<p>لحذف حسابك:</p>
+                        <ol>
+                            <li>اذهب إلى "الإعدادات"</li>
+                            <li>اضغط على "حذف الحساب"</li>
+                            <li>أكد قرارك وأدخل كلمة المرور</li>
+                            <li>سيتم حذف حسابك نهائياً خلال 7 أيام</li>
+                        </ol>
+                        <div class="highlight-box">
+                            <strong>⚠️ تنبيه:</strong> لا يمكنك التراجع عن حذف الحساب. سيتم فقدان جميع بياناتك.
+                        </div>`
+                }
+            ]
+        }
+    ];
+    
+    function renderFAQ(data, searchTerm = '') {
+        let html = '';
+        
+        data.forEach(cat => {
+            const filteredQuestions = searchTerm 
+                ? cat.questions.filter(q => 
+                    q.q.includes(searchTerm) || q.a.includes(searchTerm))
+                : cat.questions;
+            
+            if (filteredQuestions.length === 0 && searchTerm) return;
+            
+            html += `
+                <div class="faq-category" data-category="${cat.category}">
+                    <div class="category-title">
+                        <i class="fa-solid ${cat.icon}"></i>
+                        ${cat.category}
+                    </div>
+                    ${filteredQuestions.map((item, idx) => `
+                        <div class="faq-item" data-id="${idx}">
+                            <div class="faq-question" onclick="toggleFAQ(this.parentElement)">
+                                <span>${item.q}</span>
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                ${item.a}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>`;
+        });
+        
+        return html || '<p style="text-align:center;padding:40px;color:var(--text-muted);">لم يتم العثور على نتائج</p>';
+    }
+    
+    function toggleFAQ(item) {
+        item.classList.toggle('open');
+    }
+    
+    // Initial render
+    document.getElementById('faqList').innerHTML = renderFAQ(faqData);
+    
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        const searchTerm = e.target.value.trim();
+        document.getElementById('faqList').innerHTML = renderFAQ(faqData, searchTerm);
+    });
+    
+    // Quick links
+    document.querySelectorAll('.quick-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const category = link.dataset.category;
+            // Scroll to category or highlight it
+            const catElement = document.querySelector(`[data-category="${category}"]`);
+            if (catElement) {
+                catElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                catElement.style.background = 'var(--primary-muted)';
+                setTimeout(() => catElement.style.background = '', 2000);
+            }
+        });
+    });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,117 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنجاز - التحليلات</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <style>
+        .admin-header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            color: white;
+            padding: 20px;
+            border-radius: 0 0 28px 28px;
+        }
+        .admin-nav {
+            display: flex;
+            gap: 8px;
+            padding: 16px;
+            overflow-x: auto;
+        }
+        .admin-nav-item {
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-decoration: none;
+            white-space: nowrap;
+            transition: var(--transition);
+        }
+        .admin-nav-item:hover, .admin-nav-item.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .content-box {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 32px;
+            margin: 20px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-header">
+    <div class="admin-info" style="display: flex; justify-content: space-between; align-items: center; padding: 0 16px;">
+        <h1>التحليلات <i class="fa-solid fa-chart-line"></i></h1>
+        <span class="admin-badge">مشرف</span>
+    </div>
+</div>
+
+<div class="admin-nav">
+    <a href="/admin/dashboard/" class="admin-nav-item">الرئيسية</a>
+    <a href="/admin/users/" class="admin-nav-item">المستخدمين</a>
+    <a href="/admin/content/" class="admin-nav-item">المحتوى</a>
+    <a href="/admin/reports/" class="admin-nav-item">البلاغات</a>
+    <a href="/admin/analytics/" class="admin-nav-item active">التحليلات</a>
+</div>
+
+<div class="content-box">
+    <i class="fa-solid fa-chart-simple" style="font-size: 3rem; color: var(--primary); margin-bottom: 16px;"></i>
+    <h2>📊 إحصائيات المنصة</h2>
+    <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+        <div style="background: var(--primary-muted); padding: 20px; border-radius: 16px; min-width: 150px;">
+            <div style="font-size: 2rem; font-weight: 800;" id="totalUsersStat">0</div>
+            <div>إجمالي المستخدمين</div>
+        </div>
+        <div style="background: var(--success-bg); padding: 20px; border-radius: 16px; min-width: 150px;">
+            <div style="font-size: 2rem; font-weight: 800;" id="totalAgentsStat">0</div>
+            <div>المهنيين الموثقين</div>
+        </div>
+        <div style="background: var(--warning-bg); padding: 20px; border-radius: 16px; min-width: 150px;">
+            <div style="font-size: 2rem; font-weight: 800;" id="pendingAgentsStat">0</div>
+            <div>بانتظار التوثيق</div>
+        </div>
+        <div style="background: var(--sky-light); padding: 20px; border-radius: 16px; min-width: 150px;">
+            <div style="font-size: 2rem; font-weight: 800;" id="completedRequestsStat">0</div>
+            <div>طلبات مكتملة</div>
+        </div>
+    </div>
+    <a href="/admin/dashboard/" class="btn btn-primary" style="margin-top: 32px; display: inline-block; padding: 10px 20px; background: var(--primary); color: white; border-radius: 40px; text-decoration: none;">
+        <i class="fa-solid fa-arrow-right"></i> العودة للوحة التحكم
+    </a>
+</div>
+
+<button class="back-btn" onclick="window.history.back()" style="margin: 16px;">
+    <i class="fa-solid fa-arrow-right"></i> رجوع
+</button>
+
+<script>
+    const token = localStorage.getItem('enjaz_pwa_token');
+    if (!token) window.location.href = '/singin/';
+
+    async function loadStats() {
+        try {
+            const res = await fetch('/api/auth/profile/', { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
+            // يمكن جلب الإحصائيات من API مخصص لاحقاً
+            document.getElementById('totalUsersStat').innerText = '...';
+            document.getElementById('totalAgentsStat').innerText = '...';
+            document.getElementById('pendingAgentsStat').innerText = '...';
+            document.getElementById('completedRequestsStat').innerText = '...';
+        } catch(e) { console.error(e); }
+    }
+    loadStats();
+</script>
+
+</body>
+</html>

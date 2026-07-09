@@ -1,0 +1,109 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>إنجاز – توثيق الحساب</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+</head>
+<body>
+
+<div class="page-container" style="max-width: 500px; margin: 2rem auto;">
+  <div class="card">
+    <div class="card-header" style="text-align:center;">
+      <div class="card-icon">📄</div>
+      <h1>توثيق الحساب</h1>
+      <p>لإكمال تسجيلك كمقدم خدمة، يرجى رفع صورة البطاقة الموحدة (وجه وظهر).</p>
+    </div>
+    <div id="msg" class="message" style="display:none;"></div>
+    <div class="input-group">
+      <label class="input-label">الاسم الكامل (كما في البطاقة الموحدة)</label>
+      <input type="text" id="fullName" class="form-control" placeholder="أدخل اسمك الكامل">
+    </div>
+    <div class="input-group">
+      <label class="input-label">رقم الهاتف (الذي يحتوي على واتساب)</label>
+      <input type="tel" id="whatsappNumber" class="form-control" placeholder="مثال: 07701234567">
+    </div>
+    <div class="input-group">
+      <label class="input-label">وجه البطاقة الموحدة</label>
+      <input type="file" id="idFront" accept="image/*" class="form-control" capture="environment">
+    </div>
+    <div class="input-group">
+      <label class="input-label">ظهر البطاقة الموحدة</label>
+      <input type="file" id="idBack" accept="image/*" class="form-control" capture="environment">
+    </div>
+    <button id="submitIdentityBtn" type="button" class="btn btn-primary btn-block">إرسال للتوثيق</button>
+    <div style="margin-top: 16px; text-align: center;">
+      <a href="/profile-mhn/" class="btn btn-secondary">الرجوع للملف الشخصي</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const token = localStorage.getItem('enjaz_pwa_token');
+  if (!token) window.location.href = '/singin/';
+
+  function showMsg(text, type) {
+    const msgDiv = document.getElementById('msg');
+    msgDiv.textContent = text;
+    msgDiv.className = `message ${type}`;
+    msgDiv.style.display = 'flex';
+    setTimeout(() => msgDiv.style.display = 'none', 5000);
+  }
+
+  document.getElementById('submitIdentityBtn').addEventListener('click', async (e) => {
+    if (e) e.preventDefault();
+
+    const fullName = document.getElementById('fullName').value.trim();
+    const whatsapp = document.getElementById('whatsappNumber').value.trim();
+    const front = document.getElementById('idFront').files[0];
+    const back = document.getElementById('idBack').files[0];
+
+    if (!fullName) { showMsg('يرجى إدخال الاسم الكامل', 'error'); return; }
+    if (!whatsapp) { showMsg('يرجى إدخال رقم الواتساب', 'error'); return; }
+    if (!front) { showMsg('يرجى اختيار صورة وجه البطاقة', 'error'); return; }
+    if (!back) { showMsg('يرجى اختيار صورة ظهر البطاقة', 'error'); return; }
+
+    const btn = document.getElementById('submitIdentityBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> جاري الإرسال...';
+
+    const formData = new FormData();
+    formData.append('full_name', fullName);
+    formData.append('whatsapp_number', whatsapp);
+    formData.append('id_card_front', front);
+    formData.append('id_card_back', back);
+
+    try {
+      console.log("Sending identity upload request...");
+      const res = await fetch('/api/auth/upload-identity/', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+
+      const data = await res.json();
+      console.log("Response data:", data);
+
+      if (res.ok) {
+        showMsg(data.detail || '✅ تم إرسال الطلب بنجاح، سيتم مراجعته من قبل الإدارة.', 'success');
+        setTimeout(() => window.location.href = '/profile-mhn/', 2500);
+      } else {
+        showMsg('❌ ' + (data.detail || data.error || 'فشل في رفع البيانات'), 'error');
+      }
+    } catch(err) {
+      console.error("Upload error:", err);
+      showMsg('❌ فشل الاتصال بالسيرفر. تأكد من جودة الإنترنت.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'إرسال للتوثيق';
+    }
+  });
+</script>
+</body>
+</html>

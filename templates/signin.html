@@ -1,0 +1,780 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>إنجاز – تسجيل الدخول</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 50%, #ffffff 100%);
+      font-family: 'Cairo', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: -100px;
+      right: -100px;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(37,99,235,0.06) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -150px;
+      left: -100px;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, rgba(37,99,235,0.05) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .auth-wrapper {
+      max-width: 420px;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+    .auth-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .auth-logo {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 900;
+      color: white;
+      box-shadow: 0 8px 24px rgba(37,99,235,0.3);
+      margin-bottom: 12px;
+    }
+    .auth-title {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .auth-sub {
+      font-size: 0.9rem;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+    .auth-desc {
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+    .auth-card {
+      background: white;
+      border-radius: 32px;
+      padding: 28px 24px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.08);
+      border: 1px solid #e2e8f0;
+    }
+    .auth-tabs {
+      display: flex;
+      background: #f8fafc;
+      border-radius: 50px;
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+    .auth-tab {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 11px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      border-radius: 50px;
+      cursor: pointer;
+      color: #64748b;
+      transition: all 0.25s;
+      font-family: 'Cairo', sans-serif;
+    }
+    .auth-tab.active {
+      background: white;
+      color: #2563eb;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .auth-msg {
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      text-align: center;
+      word-break: break-all;
+      white-space: pre-wrap;
+    }
+    .auth-msg.show { display: flex; }
+    .auth-msg.success { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; }
+    .auth-msg.error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .input-group { margin-bottom: 18px; }
+    .input-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 8px;
+    }
+    .input-wrapper {
+      position: relative;
+    }
+    .input-icon {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 16px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 14px 46px 14px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      font-size: 15px;
+      background: #f8fafc;
+      font-family: 'Cairo', sans-serif;
+      color: #0f172a;
+      outline: none;
+      transition: all 0.25s;
+      direction: rtl;
+    }
+    .form-control:focus {
+      border-color: #2563eb;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.12);
+    }
+    .form-control::placeholder { color: #94a3b8; }
+    select.form-control {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: left 14px center;
+      background-size: 18px;
+      padding-left: 44px;
+      cursor: pointer;
+    }
+    .role-options {
+      display: flex;
+      gap: 12px;
+      margin-top: 6px;
+    }
+    .role-option {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: #64748b;
+      transition: all 0.2s;
+      background: #f8fafc;
+    }
+    .role-option input { display: none; }
+    .role-option.selected {
+      border-color: #2563eb;
+      background: #eff6ff;
+      color: #2563eb;
+    }
+    .role-option:hover:not(.selected) {
+      border-color: #2563eb;
+      color: #2563eb;
+    }
+    .profession-field {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .profession-field.show { display: block; }
+    .profession-help {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 5px;
+    }
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: white;
+      border: none;
+      padding: 15px;
+      border-radius: 40px;
+      font-weight: 800;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 20px rgba(37,99,235,0.3);
+      transition: all 0.3s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover {
+      box-shadow: 0 8px 28px rgba(37,99,235,0.4);
+      transform: translateY(-2px);
+    }
+    .submit-btn:active { transform: scale(0.98); }
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .extra-fields { display: none; }
+    .extra-fields.show { display: block; }
+    .divider {
+      text-align: center;
+      margin: 16px 0 12px;
+      position: relative;
+      font-size: 12px;
+      color: #9aa0a6;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 40%;
+      height: 1px;
+      background: #e2e8f0;
+    }
+    .divider::before { left: 0; }
+    .divider::after { right: 0; }
+    .google-btn {
+      width: 100%;
+      background: white;
+      color: #3c4043;
+      border: 1px solid #dadce0;
+      border-radius: 40px;
+      padding: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .google-btn:hover {
+      background: #f8f9fa;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .google-btn img, .google-btn svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    @media (max-width: 480px) {
+      body { padding: 16px; }
+      .auth-card { padding: 24px 20px; border-radius: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+  <div class="auth-header">
+    <div class="auth-logo">إ</div>
+    <div class="auth-title">إنجاز</div>
+    <div class="auth-sub">منصة الخدمات المهنية في العراق</div>
+    <div class="auth-desc">تواصل مع أفضل الحرفيين والمحترفين</div>
+  </div>
+
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchMode('login')">
+        <i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول
+      </button>
+      <button class="auth-tab" id="tab-register" onclick="switchMode('register')">
+        <i class="fa-solid fa-user-plus"></i> حساب جديد
+      </button>
+    </div>
+
+    <div id="authMsg" class="auth-msg"></div>
+
+    <form id="authForm" onsubmit="handleSubmit(event)">
+      <div class="input-group">
+        <label class="input-label">رقم الهاتف</label>
+        <div class="input-wrapper">
+          <span class="input-icon">📱</span>
+          <input class="form-control" type="tel" id="phone" placeholder="07XXXXXXXX" required>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">كلمة المرور</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input class="form-control" type="password" id="password" placeholder="••••••••" required>
+        </div>
+      </div>
+
+      <div id="extraFields" class="extra-fields">
+        <div class="input-group">
+          <label class="input-label">الاسم الكامل</label>
+          <div class="input-wrapper">
+            <span class="input-icon">👤</span>
+            <input class="form-control" type="text" id="fullname" placeholder="الاسم الثلاثي">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">نوع الحساب</label>
+          <div class="role-options">
+            <label class="role-option selected" id="role-customer">
+              <input type="radio" name="role" value="customer" checked>
+              <span>🧑‍💼</span> <span>طالب خدمة</span>
+            </label>
+            <label class="role-option" id="role-agent">
+              <input type="radio" name="role" value="agent">
+              <span>👨‍🔧</span> <span>مقدم خدمة</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="profession-field" id="professionField">
+          <div class="input-group">
+            <label class="input-label">المهنة / التخصص <span style="color:#0d9488;">*</span></label>
+            <div class="input-wrapper">
+              <span class="input-icon">💼</span>
+              <select id="profession" class="form-control">
+                <option value="">-- اختر المهنة --</option>
+                <option value="lawyer">⚖️ محامٍ</option>
+                <option value="electrician">🔌 كهربائي</option>
+                <option value="plumber">🚰 سباك</option>
+                <option value="mason">🧱 بناء</option>
+                <option value="painter">🎨 دهانات</option>
+                <option value="carpenter">🪚 نجار</option>
+                <option value="hvac">❄️ تكييف</option>
+                <option value="tile_mason">🪞 سيراميك</option>
+                <option value="developer">💻 مبرمج</option>
+                <option value="engineer">📐 مهندس</option>
+                <option value="security_tech">📷 كاميرات</option>
+                <option value="clearance_agent">📄 معقب</option>
+                <option value="accountant">🧾 محاسب</option>
+                <option value="other">🔄 أخرى</option>
+              </select>
+            </div>
+          </div>
+          <div id="customProfessionField" style="display:none; margin-top:8px;">
+            <div class="input-group">
+              <label class="input-label">اكتب مهنتك</label>
+              <div class="input-wrapper">
+                <span class="input-icon">✏️</span>
+                <input class="form-control" type="text" id="customProfession" placeholder="مثال: فني أجهزة طبية">
+              </div>
+            </div>
+          </div>
+          <div class="profession-help">المهنة التي ستظهر للعملاء عند البحث</div>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">
+        <i class="fa-solid fa-right-to-bracket"></i> دخول الحساب
+      </button>
+
+      <div style="text-align: center; margin-top: 16px;">
+        <button type="button" id="forgotPasswordBtn" style="background: none; border: none; color: #0d9488; font-weight: 500; font-size: 0.85rem; cursor: pointer; font-family: 'Tajawal', sans-serif;">
+          نسيت كلمة المرور؟
+        </button>
+      </div>
+
+      <div class="divider">أو</div>
+
+      <button type="button" class="google-btn" id="googleBtn">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          <path fill="none" d="M0 0h48v48H0z"/>
+        </svg>
+        المتابعة بحساب Google
+      </button>
+    </form>
+  </div>
+</div>
+
+<div id="resetModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center;">
+  <div style="background: white; max-width: 340px; width: 90%; border-radius: 28px; padding: 24px; text-align: center;">
+    <div id="resetStep1">
+      <h3 style="color:#0f172a; margin-bottom: 16px;">استعادة كلمة المرور</h3>
+      <p style="font-size:13px; color:#64748b; margin-bottom:16px;">أدخل رقم هاتفك المسجل</p>
+      <div class="input-group">
+        <input type="tel" id="resetPhone" class="form-control" placeholder="07XXXXXXXX" style="direction: ltr; text-align: right;">
+      </div>
+      <div id="resetMsg" style="font-size:12px; margin-top:8px; color:#dc2626;"></div>
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button id="resetCancelBtn" style="flex:1; background:#f1f5f9; border:none; padding:10px; border-radius:40px; cursor:pointer;">إلغاء</button>
+        <button id="resetSendBtn" style="flex:1; background:#0d9488; color:white; border:none; padding:10px; border-radius:40px; cursor:pointer;">إرسال</button>
+      </div>
+    </div>
+    <div id="resetStep2" style="display: none;">
+      <h3 style="color:#0f172a; margin-bottom: 16px;">تأكيد الرمز</h3>
+      <p style="font-size:13px; color:#64748b; margin-bottom:8px;">أدخل الرمز المرسل إلى هاتفك</p>
+      <div class="input-group">
+        <input type="text" id="resetCode" class="form-control" placeholder="الرمز المكون من 6 أرقام" maxlength="6">
+      </div>
+      <div class="input-group">
+        <input type="password" id="newPasswordReset" class="form-control" placeholder="كلمة المرور الجديدة (6 أحرف على الأقل)">
+      </div>
+      <div id="resetStep2Msg" style="font-size:12px; margin-top:8px;"></div>
+      <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <button id="resetBackBtn" style="flex:1; background:#f1f5f9; border:none; padding:10px; border-radius:40px; cursor:pointer;">رجوع</button>
+        <button id="resetConfirmBtn" style="flex:1; background:#0d9488; color:white; border:none; padding:10px; border-radius:40px; cursor:pointer;">تأكيد</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let mode = 'login';
+  const extraFields = document.getElementById('extraFields');
+  const professionField = document.getElementById('professionField');
+  const customProfField = document.getElementById('customProfessionField');
+  const customProfInput = document.getElementById('customProfession');
+  const professionSelect = document.getElementById('profession');
+  const submitBtn = document.getElementById('submitBtn');
+  const googleBtn = document.getElementById('googleBtn');
+  const GOOGLE_CLIENT_ID = '133090450727-aghbhgh6ig4onlmjd4hiisvfv8ocmfe3.apps.googleusercontent.com';
+
+  // --- الوظائف الأساسية ---
+  document.querySelectorAll('.role-option').forEach(opt => {
+    opt.addEventListener('click', () => {
+      document.querySelectorAll('.role-option').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+    });
+  });
+
+  function updateProfessionField() {
+    const selectedRole = document.querySelector('input[name="role"]:checked').value;
+    if (selectedRole === 'agent') {
+      professionField.classList.add('show');
+    } else {
+      professionField.classList.remove('show');
+    }
+  }
+  document.querySelectorAll('input[name="role"]').forEach(r => {
+    r.addEventListener('change', updateProfessionField);
+  });
+  professionSelect.addEventListener('change', function () {
+    customProfField.style.display = this.value === 'other' ? 'block' : 'none';
+  });
+
+  function switchMode(m) {
+    mode = m;
+    document.getElementById('tab-login').classList.toggle('active', m === 'login');
+    document.getElementById('tab-register').classList.toggle('active', m === 'register');
+    extraFields.classList.toggle('show', m === 'register');
+    submitBtn.innerHTML = m === 'register'
+      ? '<i class="fa-solid fa-user-plus"></i> إنشاء الحساب'
+      : '<i class="fa-solid fa-right-to-bracket"></i> دخول الحساب';
+    hideMsg();
+    if (m === 'register') setTimeout(updateProfessionField, 50);
+  }
+
+  function showMsg(text, type) {
+    const el = document.getElementById('authMsg');
+    el.className = 'auth-msg ' + type;
+    el.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'check-circle' : 'circle-exclamation'}"></i> ${text}`;
+    el.classList.add('show');
+    if (type === 'success') setTimeout(() => el.classList.remove('show'), 3500);
+  }
+  function hideMsg() { document.getElementById('authMsg').classList.remove('show'); }
+
+  // --- تسجيل الدخول العادي ---
+  async function handleSubmit(e) {
+    e.preventDefault();
+    hideMsg();
+    const phone = document.getElementById('phone').value.trim();
+    const password = document.getElementById('password').value;
+    const role = document.querySelector('input[name="role"]:checked')?.value || 'customer';
+    const fullname = document.getElementById('fullname').value.trim() || 'مستخدم جديد';
+    const url = mode === 'login' ? '/api/auth/login/' : '/api/auth/register/';
+    let body = mode === 'login'
+      ? { phone_number: phone, password: password }
+      : { phone_number: phone, password: password, password_confirm: password, role: role, full_name: fullname };
+
+    if (mode === 'register' && role === 'agent') {
+      let profession = professionSelect.value;
+      let customProf = customProfInput.value.trim();
+      if (!profession) { showMsg('❌ الرجاء اختيار المهنة', 'error'); return; }
+      if (profession === 'other' && !customProf) { showMsg('❌ اكتب مهنتك عند اختيار "أخرى"', 'error'); return; }
+      body.profession = profession;
+      if (customProf) body.custom_profession = customProf;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحميل...';
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        let errorMsg = data.detail || Object.values(data).flat().join(' | ') || 'حدث خطأ';
+        showMsg('❌ ' + errorMsg, 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = mode === 'register'
+          ? '<i class="fa-solid fa-user-plus"></i> إنشاء الحساب'
+          : '<i class="fa-solid fa-right-to-bracket"></i> دخول الحساب';
+        return;
+      }
+      const token = data.access || data.token;
+      if (!token) { showMsg('❌ لم يتم استلام التوكن', 'error'); return; }
+      fetch('/api/auth/django-login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token })
+      }).catch(e => console.warn(e));
+      localStorage.setItem('enjaz_pwa_token', token);
+      if (data.refresh) localStorage.setItem('enjaz_pwa_refresh', data.refresh);
+      const finalRole = data.role || role;
+      localStorage.setItem('enjaz_user_role', finalRole);
+      showMsg('🎉 تم الدخول بنجاح! جاري التوجيه...', 'success');
+      
+      // ✅ تحديد الوجهة حسب الدور
+      let target = '/profileuser/';
+      if (finalRole === 'agent') target = '/profile-mhn/';
+      else if (finalRole === 'admin') target = '/admin/dashboard/';
+      
+      setTimeout(() => {
+        window.location.href = target;
+      }, 800);
+    } catch (err) {
+      showMsg('❌ فشل الاتصال بالخادم', 'error');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = mode === 'register'
+        ? '<i class="fa-solid fa-user-plus"></i> إنشاء الحساب'
+        : '<i class="fa-solid fa-right-to-bracket"></i> دخول الحساب';
+    }
+  }
+
+  // --- Google Login (مُحسَّن) ---
+  function startGoogleLogin() {
+    console.log("🚀 بدء تسجيل الدخول عبر Google");
+    const redirectUri = window.location.origin + '/singin/';
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: 'token id_token',
+      scope: 'openid email profile',
+      include_granted_scopes: 'true',
+      nonce: Math.random().toString(36).substring(2),
+      prompt: 'select_account',
+    });
+    const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + params.toString();
+    console.log("توجيه إلى Google:", authUrl);
+    window.location.href = authUrl;
+  }
+
+  function handleGoogleCallback() {
+    if (!window.location.hash) return;
+    console.log("🔍 معالجة الـ hash من Google:", window.location.hash);
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const idToken = hashParams.get('id_token');
+    const error = hashParams.get('error');
+    if (error) {
+      showMsg(`❌ خطأ من Google: ${error}`, 'error');
+      history.replaceState(null, '', window.location.pathname);
+      return;
+    }
+    if (!idToken) {
+      showMsg('❌ لم يتم استلام id_token من Google', 'error');
+      history.replaceState(null, '', window.location.pathname);
+      return;
+    }
+    history.replaceState(null, '', window.location.pathname);
+    showMsg('⏳ جاري التحقق من حساب Google...', 'success');
+    fetch('/api/auth/google/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: idToken })
+    })
+    .then(res => res.json().then(data => ({ ok: res.ok, data })))
+    .then(({ ok, data }) => {
+      console.log("استجابة الخادم:", data);
+      if (ok && data.access) {
+        localStorage.setItem('enjaz_pwa_token', data.access);
+        if (data.refresh) localStorage.setItem('enjaz_pwa_refresh', data.refresh);
+        const finalRole = data.role || data.user?.role || 'customer';
+        localStorage.setItem('enjaz_user_role', finalRole);
+        fetch('/api/auth/django-login/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: data.access })
+        }).catch(e => console.warn(e));
+        showMsg('🎉 تم تسجيل الدخول بنجاح!', 'success');
+        
+        const needsCompletion = data.user?.needs_phone_completion === true;
+        let target = '/profileuser/';
+        if (finalRole === 'agent') target = '/profile-mhn/';
+        else if (finalRole === 'admin') target = '/admin/dashboard/';
+        if (needsCompletion) target = '/complete-profile/';
+        
+        setTimeout(() => { window.location.href = target; }, 1000);
+      } else {
+        showMsg('❌ فشل المصادقة: ' + (data.detail || 'خطأ غير معروف'), 'error');
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      showMsg('❌ فشل الاتصال بالخادم', 'error');
+    });
+  }
+
+  // --- ربط الأحداث ---
+  googleBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    startGoogleLogin();
+  });
+  window.addEventListener('DOMContentLoaded', handleGoogleCallback);
+
+  // --- استعادة كلمة المرور (خطوتين) ---
+  let resetPhoneNumber = '';
+  const resetModal = document.getElementById('resetModal');
+  const resetStep1 = document.getElementById('resetStep1');
+  const resetStep2 = document.getElementById('resetStep2');
+  const resetPhone = document.getElementById('resetPhone');
+  const resetCode = document.getElementById('resetCode');
+  const newPasswordReset = document.getElementById('newPasswordReset');
+  const resetMsg = document.getElementById('resetMsg');
+  const resetStep2Msg = document.getElementById('resetStep2Msg');
+  const forgotBtn = document.getElementById('forgotPasswordBtn');
+  if (forgotBtn) {
+    forgotBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      resetStep1.style.display = 'block';
+      resetStep2.style.display = 'none';
+      resetPhone.value = '';
+      resetCode.value = '';
+      newPasswordReset.value = '';
+      resetMsg.innerHTML = '';
+      resetStep2Msg.innerHTML = '';
+      resetModal.style.display = 'flex';
+    });
+  }
+  document.getElementById('resetCancelBtn').addEventListener('click', () => {
+    resetModal.style.display = 'none';
+  });
+  document.getElementById('resetBackBtn').addEventListener('click', () => {
+    resetStep1.style.display = 'block';
+    resetStep2.style.display = 'none';
+    resetMsg.innerHTML = '';
+    resetStep2Msg.innerHTML = '';
+  });
+  document.getElementById('resetSendBtn').addEventListener('click', async () => {
+    const phone = resetPhone.value.trim();
+    if (!phone || !phone.match(/^07[3456789]\d{8}$/)) {
+      resetMsg.innerHTML = '❌ رقم هاتف غير صحيح (مثال: 07712345678)';
+      return;
+    }
+    const btn = document.getElementById('resetSendBtn');
+    btn.disabled = true;
+    btn.innerHTML = 'جاري...';
+    resetMsg.innerHTML = '';
+    try {
+      const res = await fetch('/api/auth/password-reset/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone_number: phone })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        resetPhoneNumber = phone;
+        resetMsg.innerHTML = '✅ تم إرسال الرمز. تحقق من هاتفك (أو اطلع على وحدة التحكم).';
+        setTimeout(() => {
+          resetStep1.style.display = 'none';
+          resetStep2.style.display = 'block';
+        }, 1500);
+      } else {
+        resetMsg.innerHTML = '❌ ' + (data.detail || 'فشل الإرسال');
+      }
+    } catch (err) {
+      resetMsg.innerHTML = '❌ فشل الاتصال بالخادم';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'إرسال';
+    }
+  });
+  document.getElementById('resetConfirmBtn').addEventListener('click', async () => {
+    const code = resetCode.value.trim();
+    const newPass = newPasswordReset.value.trim();
+    if (!code || code.length !== 6) {
+      resetStep2Msg.innerHTML = '❌ أدخل الرمز المكون من 6 أرقام';
+      return;
+    }
+    if (!newPass || newPass.length < 6) {
+      resetStep2Msg.innerHTML = '❌ كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+      return;
+    }
+    const confirmBtn = document.getElementById('resetConfirmBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = 'جاري...';
+    resetStep2Msg.innerHTML = '';
+    try {
+      const res = await fetch('/api/auth/password-reset/confirm/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone_number: resetPhoneNumber,
+          reset_code: code,
+          new_password: newPass
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        resetStep2Msg.innerHTML = '✅ تم تغيير كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول.';
+        setTimeout(() => {
+          resetModal.style.display = 'none';
+          resetPhone.value = '';
+          resetCode.value = '';
+          newPasswordReset.value = '';
+        }, 2000);
+      } else {
+        resetStep2Msg.innerHTML = '❌ ' + (data.detail || 'فشل التحقق');
+      }
+    } catch (err) {
+      resetStep2Msg.innerHTML = '❌ فشل الاتصال';
+    } finally {
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = 'تأكيد';
+    }
+  });
+  resetModal.addEventListener('click', (e) => {
+    if (e.target === resetModal) resetModal.style.display = 'none';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,440 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>إنجاز – ملفي المهني</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+</head>
+<body>
+
+<div class="top-toolbar">
+  <a href="/profile-mhn/" class="toolbar-brand">
+    <div class="toolbar-logo">إ</div>
+    <span class="toolbar-title">إنجاز</span>
+  </a>
+  <div class="notif-area" id="notifArea" style="position:relative;">
+    <button class="notif-btn" id="notifBtn">
+      <i class="fa-regular fa-bell"></i>
+      <span class="notif-count" id="notifCount">0</span>
+    </button>
+    <div class="dropdown" id="notifDropdown" style="right:0; left:auto; width:320px;">
+      <div class="notif-card">جاري التحميل...</div>
+    </div>
+  </div>
+</div>
+
+<div id="globalError" class="error-message"></div>
+<div id="unverifiedWarning" class="warning-msg" style="cursor:pointer;" onclick="window.location.href='/upload-identity/'">
+  <i class="fa-solid fa-clock"></i>
+  <span>⏳ حسابك غير موثق. اضغط هنا لرفع البطاقة الموحدة وتفعيل حسابك.</span>
+</div>
+
+<div class="page-container" id="mainContent">
+  <!-- الملف الشخصي -->
+  <div class="profile-card" style="text-align:center;">
+    <div class="profile-avatar">
+      <i class="fa-regular fa-user" id="agentAvatarIcon"></i>
+      <img id="agentAvatarImg" style="display:none;">
+    </div>
+    <div class="profile-name" id="agentName">جاري التحميل...</div>
+    <div class="profile-badge">
+      <i class="fa-solid fa-award"></i> <span id="professionText">مقدم خدمة</span>
+    </div>
+    <div class="bio" id="agentBio">جاري تحميل النبذة...</div>
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-number" id="totalJobs">0</div>
+        <div class="stat-label">مهام منجزة</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" id="ratingValue">0.0</div>
+        <div class="stat-label">التقييم</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number" id="balanceValue">0</div>
+        <div class="stat-label">الرصيد (د.ع)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ قسم توثيق الحساب (يظهر فقط إذا غير موثق) ═══ -->
+  <div id="identitySection" class="section-box" style="display: none;">
+    <div class="section-header">
+      <div class="section-heading"><i class="fa-solid fa-id-card"></i> توثيق الحساب</div>
+    </div>
+    <div id="uploadButtonDiv">
+      <p style="margin-bottom: 16px; color: var(--text-muted);">
+        لتتمكن من قبول الطلبات، يجب توثيق حسابك من خلال رفع صورة البطاقة الموحدة.
+      </p>
+      <button id="goToUploadBtn" type="button" class="btn btn-primary btn-block">
+        <i class="fa-solid fa-upload"></i> توثيق الحساب
+      </button>
+    </div>
+    <div id="verificationPendingMsg" style="display: none; text-align: center; padding: 16px; color: var(--warning);">
+      <i class="fa-solid fa-clock"></i> حسابك قيد المراجعة. سيتم إعلامك بعد الموافقة.
+    </div>
+    <div id="verificationRejectedMsg" style="display: none; text-align: center; padding: 16px; color: var(--danger);">
+      <i class="fa-solid fa-xmark-circle"></i> تم رفض طلب التوثيق. يرجى التواصل مع الدعم.
+    </div>
+  </div>
+
+  <!-- معرض الأعمال -->
+  <div class="section-box">
+    <div class="section-header">
+      <div class="section-heading"><i class="fa-solid fa-images"></i> معرض أعمالي</div>
+      <a href="{% url 'add_portfolio_image' %}" class="add-portfolio-btn"><i class="fa-solid fa-plus"></i> إضافة صورة</a>
+    </div>
+    <div class="portfolio-gallery" id="portfolioGallery">
+      <div class="empty-msg" id="portfolioEmptyMsg"><div class="empty-msg-icon">📸</div><h4>لا توجد صور بعد</h4><p>أضف صوراً لأعمالك السابقة لتبرز ملفك</p></div>
+    </div>
+  </div>
+
+  <!-- الطلبات المتاحة -->
+  <div class="section-box">
+    <div class="section-header">
+      <div class="section-heading"><i class="fa-solid fa-bell"></i> الطلبات المتاحة <span id="availableCount" style="font-size:0.75rem; color:var(--text-muted);"></span></div>
+    </div>
+    <div id="requestsContainer" class="requests-list"><div class="empty-msg">جاري التحميل...</div></div>
+  </div>
+
+  <!-- الطلبات السابقة -->
+  <div class="section-box">
+    <div class="section-header"><div class="section-heading"><i class="fa-solid fa-clock-rotate-left"></i> الطلبات السابقة</div></div>
+    <div id="pastRequestsContainer" class="requests-list"><div class="empty-msg">جاري التحميل...</div></div>
+  </div>
+</div>
+
+<div class="unauthorized-box" id="errorContent" style="display:none;">
+  <div class="unauthorized-icon"><i class="fa-solid fa-ban"></i></div>
+  <h3>غير مصرح</h3>
+  <p>ليس لديك صلاحية الدخول إلى هذه الصفحة.<br>أنت لست مقدم خدمة معتمداً.</p>
+  <button class="btn btn-primary" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+</div>
+
+<nav class="bottom-tab-bar">
+  <a href="/profile-mhn/" class="tab-item active"><i class="fa-solid fa-house"></i><span>الرئيسية</span></a>
+  <a href="/create-request/?tab=tracking" class="tab-item"><i class="fa-solid fa-list-check"></i><span>طلباتي</span></a>
+  <a href="/chat/" class="tab-item"><i class="fa-solid fa-envelope"></i><span>الرسائل</span></a>
+  <a href="/settings/" class="tab-item"><i class="fa-solid fa-gear"></i><span>حسابي</span></a>
+</nav>
+
+<script>
+(function () {
+  const token = localStorage.getItem('enjaz_pwa_token');
+  if (!token) {
+    window.location.replace('/singin/');
+    return;
+  }
+
+  function showError(message) {
+    const errDiv = document.getElementById('globalError');
+    errDiv.textContent = message;
+    errDiv.classList.add('show');
+    setTimeout(() => errDiv.classList.remove('show'), 5000);
+  }
+
+  function escapeHtml(s) {
+    if (!s) return '';
+    return s.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+  }
+
+  async function fetchWithAuth(url) {
+    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+    if (res.status === 401) {
+      localStorage.clear();
+      window.location.replace('/singin/');
+      throw new Error('Unauthorized');
+    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+
+  function updateIdentitySection(agentProfile) {
+    const section = document.getElementById('identitySection');
+    const uploadBtnDiv = document.getElementById('uploadButtonDiv');
+    const pendingDiv = document.getElementById('verificationPendingMsg');
+    const rejectedDiv = document.getElementById('verificationRejectedMsg');
+    const warningBanner = document.getElementById('unverifiedWarning');
+
+    if (agentProfile && agentProfile.is_verified === true) {
+      if (section) section.style.display = 'none';
+      if (warningBanner) warningBanner.classList.remove('show');
+      return;
+    }
+    
+    if (section) section.style.display = 'block';
+    if (warningBanner) warningBanner.classList.add('show');
+
+    const hasUploaded = agentProfile && (agentProfile.has_uploaded_id === true || 
+                        (agentProfile.id_card_front && agentProfile.id_card_back));
+    const status = agentProfile ? agentProfile.verification_status : null;
+    
+    if (hasUploaded && (status === 'pending' || status === null)) {
+      if (uploadBtnDiv) uploadBtnDiv.style.display = 'none';
+      if (pendingDiv) pendingDiv.style.display = 'block';
+      if (rejectedDiv) rejectedDiv.style.display = 'none';
+    } else if (status === 'rejected') {
+      if (uploadBtnDiv) uploadBtnDiv.style.display = 'block'; // السماح بإعادة الرفع إذا تم الرفض
+      if (pendingDiv) pendingDiv.style.display = 'none';
+      if (rejectedDiv) rejectedDiv.style.display = 'block';
+    } else {
+      if (uploadBtnDiv) uploadBtnDiv.style.display = 'block';
+      if (pendingDiv) pendingDiv.style.display = 'none';
+      if (rejectedDiv) rejectedDiv.style.display = 'none';
+    }
+  }
+
+  async function loadProfile() {
+    try {
+      const data = await fetchWithAuth('/api/auth/profile/?t=' + Date.now());
+      document.getElementById('agentName').innerText = data.full_name || 'مقدم خدمة';
+      let profDisplay = 'مقدم خدمة معتمد';
+      if (data.agent_profile) {
+        const ap = data.agent_profile;
+        if (ap.profession === 'other' && !ap.custom_profession) profDisplay = '⚠️ يرجى تحديث المهنة';
+        else if (ap.profession === 'other' && ap.custom_profession) profDisplay = ap.custom_profession;
+        else if (ap.profession_display) profDisplay = ap.profession_display;
+      }
+      document.getElementById('professionText').innerText = profDisplay;
+      const bio = data.agent_profile?.bio;
+      document.getElementById('agentBio').innerHTML = bio ? `<i class="fa-solid fa-quote-right"></i> ${escapeHtml(bio)}` : '📝 لا توجد سيرة ذاتية. أضف نبذة عن خدماتك من الإعدادات.';
+      const avatarUrl = data.avatar_url || data.avatar;
+      if (avatarUrl && avatarUrl !== 'null') {
+        const url = avatarUrl.startsWith('http') ? avatarUrl : window.location.origin + '/' + avatarUrl.replace(/^\/+/, '');
+        const img = document.getElementById('agentAvatarImg');
+        img.src = url + '?t=' + Date.now();
+        img.style.display = 'block';
+        document.getElementById('agentAvatarIcon').style.display = 'none';
+      }
+      const profile = data.agent_profile || {};
+      document.getElementById('totalJobs').innerText = profile.total_jobs || 0;
+      document.getElementById('ratingValue').innerText = (profile.rating || 0).toFixed(1);
+      document.getElementById('balanceValue').innerText = (profile.balance || 0).toLocaleString();
+      const isVerified = profile.is_verified === true;
+      // لا نحتاج لـ toggle هنا لأن updateIdentitySection تتولى الأمر
+      
+      updateIdentitySection(data.agent_profile || null);
+      
+      return isVerified;
+    } catch (e) {
+      console.error(e);
+      showError('تعذر تحميل الملف الشخصي');
+      return false;
+    }
+  }
+
+  // إدارة التنقل لصفحة التوثيق
+  const goToUploadBtn = document.getElementById('goToUploadBtn');
+  if (goToUploadBtn) {
+    goToUploadBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = '/upload-identity/';
+    });
+  }
+
+  async function loadAvailableRequests(isVerified) {
+    const container = document.getElementById('requestsContainer');
+    if (!isVerified) {
+      container.innerHTML = `<div class="empty-msg"><div class="empty-msg-icon">⏳</div><h4>حسابك قيد المراجعة</h4><p>لا يمكنك قبول الطلبات حتى يتم توثيق حسابك.</p></div>`;
+      return;
+    }
+    container.innerHTML = '<div class="empty-msg"><div class="loading">جاري التحميل...</div></div>';
+    try {
+      const requests = await fetchWithAuth('/api/services/agent/available/');
+      const countEl = document.getElementById('availableCount');
+      countEl.textContent = requests.length ? `(${requests.length})` : '';
+      if (!requests.length) {
+        container.innerHTML = `<div class="empty-msg"><div class="empty-msg-icon">✨</div><h4>لا توجد طلبات متاحة</h4><p>لا يوجد طلبات جديدة حالياً.</p></div>`;
+        return;
+      }
+      container.innerHTML = '';
+      requests.forEach(req => {
+        const locationHtml = req.lat && req.lon
+          ? `<div class="request-location"><i class="fa-solid fa-location-dot"></i><a href="https://www.google.com/maps?q=${req.lat},${req.lon}" target="_blank">عرض الموقع</a></div>`
+          : req.location ? `<div class="request-location"><i class="fa-solid fa-location-dot"></i>${escapeHtml(req.location)}</div>` : '';
+        const budget = req.estimated_price ? Number(req.estimated_price).toLocaleString() + ' د.ع' : 'قيد الاتفاق';
+        container.innerHTML += `
+          <div class="request-card">
+            <div class="request-title">${escapeHtml(req.title)}</div>
+            <div class="request-category">${escapeHtml(req.category_name)}</div>
+            <div class="request-details">${escapeHtml(req.details || 'لا توجد تفاصيل إضافية')}</div>
+            ${locationHtml}
+            <div class="request-footer">
+              <span class="request-price">💰 ${budget}</span>
+              <div class="request-actions">
+                <button class="btn-accept-request" data-id="${req.id}">قبول</button>
+                <button class="btn-reject-request" data-id="${req.id}">رفض</button>
+              </div>
+            </div>
+          </div>`;
+      });
+      attachRequestButtons();
+    } catch (e) {
+      console.error(e);
+      container.innerHTML = `<div class="empty-msg"><p>❌ فشل تحميل الطلبات المتاحة</p></div>`;
+    }
+  }
+
+  function attachRequestButtons() {
+    document.querySelectorAll('.btn-accept-request').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm('قبول الطلب؟')) acceptRequest(btn.dataset.id);
+      });
+    });
+    document.querySelectorAll('.btn-reject-request').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm('رفض الطلب؟')) rejectRequest(btn.dataset.id);
+      });
+    });
+  }
+
+  async function acceptRequest(id) {
+    try {
+      const res = await fetch(`/api/services/agent/accept/${id}/`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      if (res.ok) {
+        alert('✅ تم قبول الطلب');
+        refreshAll();
+      } else {
+        const err = await res.json();
+        alert('❌ ' + (err.error || err.detail));
+      }
+    } catch (e) { alert('❌ فشل الاتصال'); }
+  }
+
+  async function rejectRequest(id) {
+    try {
+      const res = await fetch(`/api/services/agent/reject/${id}/`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+      });
+      if (res.ok) {
+        alert('تم رفض الطلب');
+        refreshAll();
+      } else {
+        const err = await res.json();
+        alert('❌ ' + (err.error || err.detail));
+      }
+    } catch (e) { alert('❌ فشل الاتصال'); }
+  }
+
+  async function loadPastRequests() {
+    const container = document.getElementById('pastRequestsContainer');
+    container.innerHTML = '<div class="empty-msg"><div class="loading">جاري التحميل...</div></div>';
+    try {
+      const requests = await fetchWithAuth('/api/services/requests/my/');
+      const past = requests.filter(r => r.status !== 'pending' || r.agent_name);
+      if (!past.length) {
+        container.innerHTML = '<div class="empty-msg"><div class="empty-msg-icon">📭</div><h4>لا توجد طلبات سابقة</h4><p>سيظهر هنا الطلب الذي تقبله</p></div>';
+        return;
+      }
+      container.innerHTML = '';
+      past.forEach(req => {
+        const statusText = req.status_display || req.status;
+        const budgetText = req.estimated_price ? Number(req.estimated_price).toLocaleString() + ' د.ع' : 'قيد الاتفاق';
+        container.innerHTML += `
+          <div class="request-card" onclick="window.location.href='/request-details/${req.id}/'" style="cursor:pointer;">
+            <div class="request-title">${escapeHtml(req.title)}</div>
+            <div class="request-category">${escapeHtml(req.category_name)}</div>
+            <div class="request-details">${escapeHtml(req.details || '')}</div>
+            <div class="request-footer">
+              <span class="request-price">💰 ${budgetText}</span>
+              <span class="status-badge ${req.status}">${statusText}</span>
+              <button class="btn-details">تفاصيل</button>
+            </div>
+          </div>`;
+      });
+    } catch (e) {
+      console.error(e);
+      container.innerHTML = `<div class="empty-msg"><p>❌ فشل تحميل الطلبات السابقة</p></div>`;
+    }
+  }
+
+  async function loadNotifications() {
+    try {
+      const notifs = await fetchWithAuth('/api/notifications/');
+      const unread = notifs.filter(n => !n.is_read).length;
+      const badge = document.getElementById('notifCount');
+      if (unread) {
+        badge.innerText = unread > 99 ? '99+' : unread;
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+      const dropdown = document.getElementById('notifDropdown');
+      if (!notifs.length) {
+        dropdown.innerHTML = '<div class="notif-card">لا توجد إشعارات</div>';
+      } else {
+        dropdown.innerHTML = notifs.map(n => `<div class="notif-card"><div class="notif-title">${escapeHtml(n.title)}</div><div class="notif-body">${escapeHtml(n.body)}</div>${n.request ? `<div class="notif-buttons"><button class="btn-details" onclick="window.location.href='/request-details/${n.request}/'">تفاصيل</button></div>` : ''}</div>`).join('');
+      }
+    } catch(e) { console.warn('فشل تحميل الإشعارات', e); }
+  }
+
+  async function refreshAll() {
+    const isVerified = await loadProfile();
+    await loadAvailableRequests(isVerified);
+    await loadPastRequests();
+    loadNotifications();
+  }
+
+  async function init() {
+    try {
+      const profileData = await fetchWithAuth('/api/auth/profile/');
+      if (profileData.role !== 'agent') {
+        localStorage.setItem('enjaz_user_role', 'customer');
+        window.location.href = '/profileuser/';
+        return;
+      }
+      await refreshAll();
+      if (navigator.geolocation && !localStorage.getItem('auto_location_attempted')) {
+        localStorage.setItem('auto_location_attempted', 'true');
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+          const lat = pos.coords.latitude, lon = pos.coords.longitude;
+          try {
+            const cityRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=ar`);
+            const cityData = await cityRes.json();
+            const city = cityData.address?.city || cityData.address?.town || '';
+            await fetch('/api/auth/agent/profile/', {
+              method: 'PUT',
+              headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ city, lat, lon })
+            });
+          } catch(e) {}
+        }, () => {});
+      }
+    } catch (e) {
+      console.error(e);
+      showError('حدث خطأ في الاتصال بالخادم. تأكد من اتصالك بالإنترنت وحاول تحديث الصفحة.');
+    }
+  }
+
+  init();
+
+  document.getElementById('logoutBtn')?.addEventListener('click', () => {
+    localStorage.clear();
+    window.location.href = '/singin/';
+  });
+
+  const notifBtn = document.getElementById('notifBtn');
+  const notifDropdown = document.getElementById('notifDropdown');
+  notifBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    loadNotifications();
+    notifDropdown.classList.toggle('show');
+  });
+  document.addEventListener('click', (e) => {
+    if (!document.getElementById('notifArea')?.contains(e.target)) notifDropdown?.classList.remove('show');
+  });
+})();
+</script>
+</body>
+</html>

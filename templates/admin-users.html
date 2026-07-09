@@ -1,0 +1,377 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنجاز - إدارة المستخدمين</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'css/site.css' %}">
+    <style>
+        .admin-header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            color: white;
+            padding: 20px;
+            border-radius: 0 0 28px 28px;
+        }
+        .admin-nav {
+            display: flex;
+            gap: 8px;
+            padding: 16px;
+            overflow-x: auto;
+        }
+        .admin-nav-item {
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-decoration: none;
+            white-space: nowrap;
+            transition: var(--transition);
+        }
+        .admin-nav-item:hover, .admin-nav-item.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .content-box {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 24px;
+            margin: 20px;
+            border: 1px solid var(--border);
+        }
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.85rem;
+        }
+        .users-table th, .users-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .users-table th {
+            background: var(--bg-gray);
+            font-weight: 800;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: var(--bg-gray);
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .status-badge.verified {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+        .status-badge.pending {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+        .status-badge.customer {
+            background: var(--sky-light);
+            color: var(--sky);
+        }
+        .status-badge.admin {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+        .verify-btn {
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            border: none;
+            cursor: pointer;
+            margin: 2px;
+        }
+        .verify-btn:hover {
+            background: var(--primary-dark);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 28px;
+            padding: 20px;
+            text-align: center;
+        }
+        .modal-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 12px;
+            margin: 10px 0;
+        }
+        .btn-modal-close {
+            background: #f1f5f9;
+            color: #64748b;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+        }
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-bar input, .filter-bar select {
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            font-family: 'Tajawal', sans-serif;
+        }
+        .btn-search {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+        @media (max-width: 768px) {
+            .users-table th, .users-table td {
+                padding: 6px;
+                font-size: 0.75rem;
+            }
+            .verify-btn {
+                padding: 2px 6px;
+                font-size: 0.65rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="admin-header">
+    <div class="admin-info" style="display: flex; justify-content: space-between; align-items: center; padding: 0 16px;">
+        <h1>إدارة المستخدمين <i class="fa-solid fa-users"></i></h1>
+        <span class="admin-badge" style="background: var(--danger); padding: 6px 12px; border-radius: 30px;">مشرف</span>
+    </div>
+</div>
+
+<div class="admin-nav">
+    <a href="/admin/dashboard/" class="admin-nav-item">الرئيسية</a>
+    <a href="/admin/users/" class="admin-nav-item active">المستخدمين</a>
+    <a href="/admin/content/" class="admin-nav-item">المحتوى</a>
+    <a href="/admin/reports/" class="admin-nav-item">البلاغات</a>
+    <a href="/admin/analytics/" class="admin-nav-item">التحليلات</a>
+</div>
+
+<div class="content-box">
+    <h3>📋 قائمة المستخدمين</h3>
+    <div class="filter-bar">
+        <input type="text" id="searchInput" placeholder="بحث بالاسم أو رقم الهاتف...">
+        <select id="roleFilter">
+            <option value="all">جميع الأدوار</option>
+            <option value="customer">طالب خدمة</option>
+            <option value="agent">مقدم خدمة</option>
+            <option value="admin">مدير</option>
+        </select>
+        <select id="statusFilter">
+            <option value="all">جميع الحالات</option>
+            <option value="verified">موثق</option>
+            <option value="pending">بانتظار التوثيق</option>
+        </select>
+        <button class="btn-search" onclick="filterUsers()">تصفية</button>
+    </div>
+    <div id="usersTableContainer">
+        <div class="loading">جاري التحميل...</div>
+    </div>
+</div>
+
+<!-- نافذة عرض البطاقة -->
+<div id="idCardModal" class="modal">
+    <div class="modal-content">
+        <h3>صورة البطاقة الموحدة</h3>
+        <div><strong>وجه البطاقة:</strong></div>
+        <img id="modalIdFront" class="modal-image">
+        <div><strong>ظهر البطاقة:</strong></div>
+        <img id="modalIdBack" class="modal-image">
+        <button onclick="closeIdCardModal()" class="btn-modal-close">إغلاق</button>
+    </div>
+</div>
+
+<button class="back-btn" onclick="window.history.back()" style="margin: 16px;">
+    <i class="fa-solid fa-arrow-right"></i> رجوع
+</button>
+
+<script>
+    const token = localStorage.getItem('enjaz_pwa_token');
+    if (!token) {
+        window.location.href = '/singin/';
+    }
+
+    let allUsers = [];
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    async function loadUsers() {
+        const container = document.getElementById('usersTableContainer');
+        try {
+            const res = await fetch('/api/admin/all-users/', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            allUsers = await res.json();
+            filterUsers();
+        } catch (error) {
+            console.error(error);
+            container.innerHTML = `<div class="loading">خطأ في تحميل البيانات: ${error.message}</div>`;
+        }
+    }
+
+    function filterUsers() {
+        const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+        const roleFilter = document.getElementById('roleFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+
+        let filtered = allUsers.filter(user => {
+            if (searchTerm && !user.name.toLowerCase().includes(searchTerm) && !user.phone.includes(searchTerm)) return false;
+            if (roleFilter !== 'all' && user.role !== roleFilter) return false;
+            if (statusFilter !== 'all') {
+                if (statusFilter === 'verified' && !(user.role === 'agent' && user.is_verified === true)) return false;
+                if (statusFilter === 'pending' && !(user.role === 'agent' && user.is_verified === false)) return false;
+            }
+            return true;
+        });
+
+        if (!filtered.length) {
+            document.getElementById('usersTableContainer').innerHTML = '<div class="loading">لا يوجد مستخدمون مطابقون</div>';
+            return;
+        }
+
+        let html = `
+            <table class="users-table">
+                <thead>
+                    <tr><th>الصورة</th><th>الاسم</th><th>رقم الهاتف</th><th>الدور</th><th>حالة المهني</th><th>تاريخ التسجيل</th><th>إجراءات</th></tr>
+                </thead>
+                <tbody>
+        `;
+        filtered.forEach(user => {
+            let avatarHtml = user.avatar ? `<img src="${user.avatar}" class="user-avatar">` : `<div class="user-avatar" style="display: flex; align-items: center; justify-content: center;"><i class="fa-regular fa-user"></i></div>`;
+            let roleText = user.role === 'agent' ? 'مقدم خدمة' : (user.role === 'admin' ? 'مدير' : 'طالب خدمة');
+            let statusHtml = '';
+            let verifyButton = '';
+            let idCardButton = '';
+            if (user.role === 'agent') {
+                if (user.is_verified) {
+                    statusHtml = '<span class="status-badge verified">موثق</span>';
+                } else {
+                    statusHtml = '<span class="status-badge pending">بانتظار التوثيق</span>';
+                    if (user.id_card_front || user.id_card_back) {
+                        idCardButton = `<button class="verify-btn" onclick="showAgentIdCard(${user.id})">عرض البطاقة</button>`;
+                    }
+                }
+                if (!user.is_verified) {
+                    verifyButton = `<button class="verify-btn" onclick="verifyAgent(${user.id})">توثيق</button>`;
+                }
+            } else {
+                statusHtml = user.role === 'admin' ? '<span class="status-badge admin">مدير</span>' : '<span class="status-badge customer">عميل</span>';
+            }
+
+            html += `
+                <tr>
+                    <td>${avatarHtml}</td>
+                    <td>${escapeHtml(user.name)}</td>
+                    <td>${escapeHtml(user.phone)}</td>
+                    <td>${roleText}</td>
+                    <td>${statusHtml}</td>
+                    <td>${escapeHtml(user.date_joined)}</td>
+                    <td>
+                        ${verifyButton}
+                        ${idCardButton}
+                        <button class="verify-btn" style="background:#64748b;" onclick="toggleBlockUser(${user.id}, ${user.is_active})">${user.is_active ? 'تعطيل' : 'تفعيل'}</button>
+                    </td>
+                </tr>
+            `;
+        });
+        html += `</tbody>`;
+        document.getElementById('usersTableContainer').innerHTML = html;
+    }
+
+    async function verifyAgent(userId) {
+        if (!confirm('هل تريد توثيق هذا المهني؟')) return;
+        try {
+            const res = await fetch(`/api/admin/agents/${userId}/approve/`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert('✅ تم توثيق المهني بنجاح');
+                loadUsers();
+            } else {
+                alert('❌ ' + (data.detail || data.error || 'فشل التوثيق'));
+            }
+        } catch(e) { alert('❌ فشل الاتصال'); }
+    }
+
+    async function toggleBlockUser(userId, isActive) {
+        if (!confirm(`هل تريد ${isActive ? 'تعطيل' : 'تفعيل'} هذا المستخدم؟`)) return;
+        // يمكن استدعاء API لتغيير حالة is_active (غير موجود حالياً)
+        alert(`سيتم ${isActive ? 'تعطيل' : 'تفعيل'} المستخدم قريباً (واجهة API قيد التطوير)`);
+    }
+
+    async function showAgentIdCard(userId) {
+        try {
+            const res = await fetch('/api/admin/all-users/', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const users = await res.json();
+            const user = users.find(u => u.id == userId);
+            if (user && user.id_card_front) {
+                document.getElementById('modalIdFront').src = user.id_card_front;
+                document.getElementById('modalIdBack').src = user.id_card_back || '';
+                document.getElementById('idCardModal').style.display = 'flex';
+            } else {
+                alert('لا توجد صور بطاقة لهذا المهني');
+            }
+        } catch(e) {
+            alert('فشل تحميل الصور');
+        }
+    }
+
+    function closeIdCardModal() {
+        document.getElementById('idCardModal').style.display = 'none';
+    }
+
+    loadUsers();
+</script>
+</body>
+</html>
