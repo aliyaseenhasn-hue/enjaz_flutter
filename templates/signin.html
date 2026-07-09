@@ -566,7 +566,7 @@
       
       // ✅ تحديد الوجهة حسب الدور
       let target = '/profileuser/';
-      if (finalRole === 'agent') target = '/profile-mhn/';
+      if (finalRole === 'agent') target = '/profile_mhn/';
       else if (finalRole === 'admin') target = '/admin/dashboard/';
       
       setTimeout(() => {
@@ -584,7 +584,7 @@
   // --- Google Login (مُحسَّن) ---
   function startGoogleLogin() {
     console.log("🚀 بدء تسجيل الدخول عبر Google");
-    const redirectUri = window.location.origin + '/singin/';
+    const redirectUri = window.location.origin + '/signin/';
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
       redirect_uri: redirectUri,
