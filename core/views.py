@@ -17,6 +17,12 @@ from django.db.models import Sum
 
 
 def index(request):
+    if request.user.is_authenticated:
+        if request.user.is_superuser or request.user.role == 'admin':
+            return redirect('admin-dashboard')
+        if request.user.role == 'agent':
+            return redirect('profile-mhn')
+        return redirect('profileuser')
     return redirect('signin')
 def upload_identity_page(request):
     return render(request, 'upload-identity.html')
