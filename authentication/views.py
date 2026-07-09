@@ -851,7 +851,23 @@ class ProfessionalListView(APIView):
 
         search = request.query_params.get('search')
         if search:
-            queryset = queryset.filter(Q(user__first_name__icontains=search) | Q(user__last_name__icontains=search) | Q(bio__icontains=search))
+            from services.models import Category
+
+            # تنظيف نص البحث (التطبيع العربي لزيادة دقة النتائج)
+            s = search.replace('أ','ا').replace('إ','ا').replace('آ','ا').replace('ة','ه').replace('ى','ي')
+
+            # جلب المهن المرتبطة بالأقسام التي تطابق نص البحث
+            matching_professions = Category.objects.filter(
+                Q(name__icontains=search) | Q(name__icontains=s) | Q(description__icontains=search)
+            ).values_list('related_profession', flat=True)
+
+            queryset = queryset.filter(
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search) |
+                Q(bio__icontains=search) |
+                Q(custom_profession__icontains=search) |
+                Q(profession__in=matching_professions)
+            )
 
         ordering = request.query_params.get('ordering', '-rating')
         if ordering == '-avg_rating':

@@ -69,14 +69,30 @@ class FavoriteSerializer(serializers.ModelSerializer):
         model = Favorite
         fields = ['id', 'agent', 'created_at']
 
-class PasswordResetRequestSerializer(serializers.Serializer): phone_number = serializers.CharField()
-class PasswordResetConfirmSerializer(serializers.Serializer): phone_number = serializers.CharField(); reset_code = serializers.CharField(); new_password = serializers.CharField()
-class CategorySerializer(serializers.Serializer): id = serializers.IntegerField(); name_ar = serializers.CharField(source='name', default="")
+class PasswordResetRequestSerializer(serializers.Serializer):
+    phone_number = serializers.CharField()
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    phone_number = serializers.CharField()
+    reset_code = serializers.CharField()
+    new_password = serializers.CharField()
+
+class CategorySerializer(serializers.ModelSerializer):
+    name_ar = serializers.CharField(source='name')
+    class Meta:
+        from services.models import Category
+        model = Category
+        fields = ['id', 'name_ar', 'icon', 'description', 'order']
+
 class PortfolioItemSerializer(serializers.ModelSerializer):
-    class Meta: model = PortfolioImage; fields = ['id', 'caption', 'image']
+    class Meta:
+        model = PortfolioImage
+        fields = ['id', 'caption', 'image']
+
 class ProfessionalSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True); title = serializers.CharField(source='get_profession_display', read_only=True)
     class Meta: model = AgentProfile; fields = ['id', 'user', 'title', 'city', 'rating', 'total_jobs']
+
 class ProfessionalDetailSerializer(ProfessionalSerializer):
     portfolio_items = PortfolioItemSerializer(many=True, read_only=True)
     class Meta(ProfessionalSerializer.Meta): fields = ProfessionalSerializer.Meta.fields + ['portfolio_items']
