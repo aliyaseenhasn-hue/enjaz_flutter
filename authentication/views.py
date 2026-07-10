@@ -29,18 +29,13 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
-class RegisterView(APIView):
-    permission_classes = [AllowAny]
-    def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response({"detail": str(serializer.errors)}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            user = serializer.save()
-            tokens = TokenResponseSerializer.get_tokens(user, context={'request': request})
-            return Response({"detail": "تم إنشاء الحساب بنجاح", **tokens}, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+def internal_normalize_phone(phone):
+    if not phone: return ''
+    digits = ''.join(ch for ch in phone if ch.isdigit())
+    if digits.startswith('00964') and len(digits) == 14: return '0' + digits[5:]
+    if digits.startswith('964') and len(digits) == 13: return '0' + digits[3:]
+    if digits.startswith('7') and len(digits) == 10: return '0' + digits
+    return digits
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -48,16 +43,14 @@ class LoginView(APIView):
         phone_raw = request.data.get('phone_number')
         password = request.data.get('password')
         if not phone_raw or not password:
-            return Response({"detail": "يرجى إدخال رقم الهاتف وكلمة المرور."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "يرجى إدخال رقم الهاتف وكلمة المرور."}, status=400)
         try:
-            from .serializers import normalize_iraqi_phone
-            phone = normalize_iraqi_phone(phone_raw)
-            user = authenticate(phone_number=phone, password=password)
-            if not user:
-                user = authenticate(username=phone, password=password)
+            phone = internal_normalize_phone(phone_raw)
+            # في Django، عندما يكون USERNAME_FIELD هو phone_number، نمرر القيمة في معامل username
+            user = authenticate(username=phone, password=password)
             
             if user:
-                if not user.is_active: return Response({"detail": "هذا الحساب معطل."}, status=status.HTTP_400_BAD_REQUEST)
+                if not user.is_active: return Response({"detail": "هذا الحساب معطل."}, status=400)
                 refresh = RefreshToken.for_user(user)
                 return Response({
                     "access": str(refresh.access_token),
@@ -65,36 +58,50 @@ class LoginView(APIView):
                     "role": getattr(user, 'role', 'customer'),
                     "user": UserSerializer(user, context={'request': request}).data,
                     "detail": "تم تسجيل الدخول بنجاح."
-                }, status=status.HTTP_200_OK)
-            return Response({"detail": "رقم الهاتف أو كلمة المرور غير صحيحة."}, status=status.HTTP_401_UNAUTHORIZED)
+                }, status=200)
+            return Response({"detail": "رقم الهاتف أو كلمة المرور غير صحيحة."}, status=401)
         except Exception as e:
-            return Response({"detail": "خطأ في النظام", "error": str(e), "trace": traceback.format_exc()}, status=500)
+            import traceback
+            return Response({
+                "detail": "خطأ في النظام",
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }, status=500)
+
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if not serializer.is_valid(): return Response({"detail": str(serializer.errors)}, status=400)
+        try:
+            user = serializer.save()
+            tokens = TokenResponseSerializer.get_tokens(user, context={'request': request})
+            return Response({"detail": "تم إنشاء الحساب بنجاح", **tokens}, status=201)
+        except Exception as e: return Response({"detail": str(e)}, status=500)
 
 class GoogleAuthView(APIView):
     permission_classes = [AllowAny]
-    def post(self, request): return Response({"detail": "قيد التنفيذ"}, status=200)
+    def post(self, request): return Response({"detail": "قيد التطوير"}, status=200)
 
 class SendVerificationCodeView(APIView):
     permission_classes = [AllowAny]
-    def post(self, request): return Response({"detail": "قيد التنفيذ"}, status=200)
+    def post(self, request): return Response({"detail": "قيد التطوير"}, status=200)
 
 class VerifyPhoneView(APIView):
     permission_classes = [AllowAny]
-    def post(self, request): return Response({"detail": "قيد التنفيذ"}, status=200)
+    def post(self, request): return Response({"detail": "قيد التطوير"}, status=200)
 
 class UpdateFcmTokenView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
         token = request.data.get('fcm_token')
-        request.user.fcm_token = token
-        request.user.save()
+        request.user.fcm_token = token; request.user.save()
         return Response({"detail": "تم التحديث"})
 
 class ToggleOnlineView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
-        request.user.is_online = not request.user.is_online
-        request.user.save()
+        request.user.is_online = not request.user.is_online; request.user.save()
         return Response({"is_online": request.user.is_online})
 
 class ProfileView(APIView):
@@ -102,20 +109,16 @@ class ProfileView(APIView):
     def get(self, request): return Response(UserSerializer(request.user, context={'request': request}).data)
     def patch(self, request):
         serializer = UserSerializer(request.user, data=request.data, partial=True, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
+        if serializer.is_valid(): serializer.save(); return Response(serializer.data)
         return Response(serializer.errors, status=400)
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
-    def post(self, request): return Response({"detail": "قيد التنفيذ"}, status=200)
+    def post(self, request): return Response({"detail": "قيد التطوير"}, status=200)
 
 class DeleteAccountView(APIView):
     permission_classes = [IsAuthenticated]
-    def delete(self, request):
-        request.user.delete()
-        return Response(status=204)
+    def delete(self, request): request.user.delete(); return Response(status=204)
 
 class AgentProfileView(APIView):
     permission_classes = [IsAuthenticated]

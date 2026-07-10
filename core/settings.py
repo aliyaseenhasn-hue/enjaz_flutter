@@ -12,7 +12,7 @@ if not SECRET_KEY or SECRET_KEY == 'django-insecure-prod-key-12345':
     import secrets
     SECRET_KEY = secrets.token_urlsafe(50)
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(', ')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='njazzz.pythonanywhere.com, 127.0.0.1, localhost').split(', ')
 
 # التطبيقات المثبتة
 INSTALLED_APPS = [
@@ -136,18 +136,10 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+# إعدادات الـ CORS والـ SSL المحسنة
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-
-# إضافة روابط Firebase صراحةً لزيادة الأمان والتأكد من قبول المتصفح
-CORS_ALLOWED_ORIGINS = [
-    "https://enjazzzzz.firebaseapp.com",
-    "https://enjazzzzz.web.app",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-]
-
-# ترويسات إضافية مطلوبة لمتصفحات الويب الحديثة
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -159,8 +151,14 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
-
 CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
+
+# ضروري لـ PythonAnywhere للتعرف على الروابط المشفرة (HTTPS)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# اجعل هذه False أثناء التطوير إذا كنت تواجه مشاكل في الـ CORS/Login
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
 
 OTPIQ_API_KEY = config('OTPIQ_API_KEY', default='')
 OTPIQ_SENDER_ID = config('OTPIQ_SENDER_ID', default='Enjaz')
