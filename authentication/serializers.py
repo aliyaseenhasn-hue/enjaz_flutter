@@ -4,7 +4,6 @@ from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from .models import User, AgentProfile, Favorite, PortfolioImage
-from services.models import Category
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +87,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 class CategorySerializer(serializers.ModelSerializer):
     name_ar = serializers.CharField(source='name')
     class Meta:
+        from services.models import Category
         model = Category
         fields = ['id', 'name_ar', 'icon', 'description', 'order']
 
