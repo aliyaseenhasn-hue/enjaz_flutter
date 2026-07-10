@@ -14,4 +14,8 @@ node_modules/
 *.zip
 *.log
 firebase-auth.json
+enjazzzzz-c68d47df6f64.json
 enjaz-release.keystore
+*.json
+!package.json
+!package-lock.json

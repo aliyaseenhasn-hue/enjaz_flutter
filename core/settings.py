@@ -12,7 +12,7 @@ if not SECRET_KEY or SECRET_KEY == 'django-insecure-prod-key-12345':
     import secrets
     SECRET_KEY = secrets.token_urlsafe(50)
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = ['*', '.pythonanywhere.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(', ')
 
 # التطبيقات المثبتة
 INSTALLED_APPS = [
@@ -185,7 +185,11 @@ from firebase_admin import credentials
 OPENROUTER_API_KEY = config('OPENROUTER_API_KEY', default='')
 
 # إعداد Firebase Admin SDK
-FIREBASE_KEY_PATH = os.path.join(BASE_DIR.parent, "enjazzzzz-c68d47df6f64.json")
+FIREBASE_KEY_PATH = config('FIREBASE_CREDENTIALS_PATH', default=os.path.join(BASE_DIR.parent, "enjazzzzz-c68d47df6f64.json"))
+
+# التأكد من أن المسار مطلق إذا كان نسبياً
+if not os.path.isabs(FIREBASE_KEY_PATH):
+    FIREBASE_KEY_PATH = os.path.join(BASE_DIR, FIREBASE_KEY_PATH)
 
 if os.path.exists(FIREBASE_KEY_PATH):
     try:

@@ -28,7 +28,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'phone_number', 'full_name', 'role', 'profile_photo', 'agent_profile']
+        fields = ['id', 'phone_number', 'full_name', 'role', 'profile_photo', 'is_online', 'agent_profile']
 
     def get_role(self, obj):
         if obj.is_superuser:

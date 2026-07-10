@@ -20,6 +20,7 @@ urlpatterns = [
     # ── توثيق رقم الهاتف وتعيين كلمة المرور (لحسابات Google) ────────────
     path('send-verification-code/', views.SendVerificationCodeView.as_view(), name='send-verification-code'),
     path('verify-phone/', views.VerifyPhoneView.as_view(), name='verify-phone'),
+    path('toggle-online/', views.ToggleOnlineView.as_view(), name='toggle-online'),
     path('update-fcm-token/', views.UpdateFcmTokenView.as_view(), name='update-fcm-token'),
 
     # ── إدارة المهنيين ──────────────────────────────────────────────────

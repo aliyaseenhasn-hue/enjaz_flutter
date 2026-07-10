@@ -61,6 +61,10 @@ class User(AbstractUser):
     # ─── حقل توكن الإشعارات (Firebase FCM) ────────────────────────────────
     fcm_token = models.CharField(max_length=255, null=True, blank=True, verbose_name="توكن الإشعارات")
 
+    # ─── حالة الاتصال (متاح/غير متاح) ───────────────────────────────────
+    is_online = models.BooleanField(default=False, verbose_name="متاح حالياً")
+    last_seen = models.DateTimeField(null=True, blank=True, verbose_name="آخر ظهور")
+
     # ─── حقول إعادة تعيين كلمة المرور ─────────────────────────────────────
     reset_code = models.CharField(max_length=10, null=True, blank=True)
     reset_code_expiry = models.DateTimeField(null=True, blank=True)

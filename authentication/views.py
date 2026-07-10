@@ -282,6 +282,21 @@ class UpdateFcmTokenView(APIView):
         return Response({"detail": "FCM token updated"})
 
 
+class ToggleOnlineView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        user.is_online = not user.is_online
+        if user.is_online:
+            user.last_seen = now()
+        user.save(update_fields=['is_online', 'last_seen'])
+        return Response({
+            "is_online": user.is_online,
+            "detail": "تم تحديث حالة الاتصال بنجاح"
+        })
+
+
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
