@@ -4,6 +4,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from .models import User, AgentProfile, Favorite, PortfolioImage
+from services.models import Category
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class UserSerializer(serializers.ModelSerializer):
     def get_profile_photo(self, obj):
         return f"https://njazzz.pythonanywhere.com{obj.avatar.url}" if obj.avatar else None
     def get_agent_profile(self, obj):
-        try: return AgentProfileSerializer(obj.agent_profile).data
+        try: return AgentProfileSerializer(obj.agent_profile, context=self.context).data
         except: return None
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -87,7 +88,6 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 class CategorySerializer(serializers.ModelSerializer):
     name_ar = serializers.CharField(source='name')
     class Meta:
-        from services.models import Category
         model = Category
         fields = ['id', 'name_ar', 'icon', 'description', 'order']
 
@@ -101,5 +101,6 @@ class ProfessionalSerializer(serializers.ModelSerializer):
     class Meta: model = AgentProfile; fields = ['id', 'user', 'title', 'city', 'rating', 'total_jobs']
 
 class ProfessionalDetailSerializer(ProfessionalSerializer):
-    portfolio_items = PortfolioItemSerializer(many=True, read_only=True)
-    class Meta(ProfessionalSerializer.Meta): fields = ProfessionalSerializer.Meta.fields + ['portfolio_items']
+    portfolio_images = PortfolioItemSerializer(many=True, read_only=True, source='portfolio_images')
+    class Meta(ProfessionalSerializer.Meta):
+        fields = ProfessionalSerializer.Meta.fields + ['portfolio_images']

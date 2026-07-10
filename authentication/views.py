@@ -26,12 +26,12 @@ from .models import PortfolioImage, AgentProfile, Favorite
 from .serializers import (
     RegisterSerializer, TokenResponseSerializer,
     PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
-    AgentDirectorySerializer, FavoriteSerializer, UserSerializer
+    AgentDirectorySerializer, FavoriteSerializer, UserSerializer,
+    CategorySerializer
 )
 
 from services.models import ServiceRequest, RequestMessage, Review, WalletTransaction, RequestTimeline, RequestAttachment
 from notifications.models import Notification
-from .models import PortfolioImage, AgentProfile
 from .forms import PortfolioImageForm
 
 logger = logging.getLogger(__name__)
@@ -112,20 +112,24 @@ class LoginView(APIView):
         from .serializers import normalize_iraqi_phone
         phone = normalize_iraqi_phone(phone_raw)
 
-        user = authenticate(username=phone, password=password)
-        if user:
-            if not user.is_active:
-                return Response({"detail": "هذا الحساب معطل."}, status=status.HTTP_400_BAD_REQUEST)
-            refresh = RefreshToken.for_user(user)
-            user_role = 'admin' if user.is_superuser else getattr(user, 'role', 'customer')
-            return Response({
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-                "role": user_role,
-                "user": UserSerializer(user, context={'request': request}).data,
-                "detail": "تم تسجيل الدخول بنجاح."
-            }, status=status.HTTP_200_OK)
-        return Response({"detail": "رقم الهاتف أو كلمة المرور غير صحيحة."}, status=status.HTTP_401_UNAUTHORIZED)
+        try:
+            user = authenticate(username=phone, password=password)
+            if user:
+                if not user.is_active:
+                    return Response({"detail": "هذا الحساب معطل."}, status=status.HTTP_400_BAD_REQUEST)
+                refresh = RefreshToken.for_user(user)
+                user_role = 'admin' if user.is_superuser else getattr(user, 'role', 'customer')
+                return Response({
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                    "role": user_role,
+                    "user": UserSerializer(user, context={'request': request}).data,
+                    "detail": "تم تسجيل الدخول بنجاح."
+                }, status=status.HTTP_200_OK)
+            return Response({"detail": "رقم الهاتف أو كلمة المرور غير صحيحة."}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            logger.error(f"Login error: {str(e)}")
+            return Response({"detail": f"حدث خطأ في النظام: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class GoogleAuthView(APIView):
