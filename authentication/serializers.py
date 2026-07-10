@@ -31,16 +31,27 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'phone_number', 'full_name', 'role', 'profile_photo', 'is_online', 'agent_profile']
 
     def get_role(self, obj):
-        if obj.is_superuser:
-            return 'admin'
-        return obj.role
+        if obj.is_superuser: return 'admin'
+        return getattr(obj, 'role', 'customer')
+
     def get_full_name(self, obj):
-        return f"{obj.first_name or ''} {obj.last_name or ''}".strip() or obj.phone_number
+        name = f"{obj.first_name or ''} {obj.last_name or ''}".strip()
+        return name if name else obj.phone_number
+
     def get_profile_photo(self, obj):
-        return f"https://njazzz.pythonanywhere.com{obj.avatar.url}" if obj.avatar else None
+        if not obj.avatar: return None
+        request = self.context.get('request')
+        if request: return request.build_absolute_uri(obj.avatar.url)
+        return obj.avatar.url
+
     def get_agent_profile(self, obj):
-        try: return AgentProfileSerializer(obj.agent_profile, context=self.context).data
-        except: return None
+        try:
+            profile = getattr(obj, 'agent_profile', None)
+            if profile:
+                return AgentProfileSerializer(profile, context=self.context).data
+        except:
+            pass
+        return None
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -97,8 +108,11 @@ class PortfolioItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'caption', 'image']
 
 class ProfessionalSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True); title = serializers.CharField(source='get_profession_display', read_only=True)
-    class Meta: model = AgentProfile; fields = ['id', 'user', 'title', 'city', 'rating', 'total_jobs']
+    user = UserSerializer(read_only=True)
+    title = serializers.CharField(source='get_profession_display', read_only=True)
+    class Meta:
+        model = AgentProfile
+        fields = ['id', 'user', 'title', 'city', 'rating', 'total_jobs']
 
 class ProfessionalDetailSerializer(ProfessionalSerializer):
     portfolio_images = PortfolioItemSerializer(many=True, read_only=True, source='portfolio_images')
