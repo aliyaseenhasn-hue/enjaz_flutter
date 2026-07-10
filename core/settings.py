@@ -139,6 +139,14 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
+# إضافة روابط Firebase صراحةً لزيادة الأمان والتأكد من قبول المتصفح
+CORS_ALLOWED_ORIGINS = [
+    "https://enjazzzzz.firebaseapp.com",
+    "https://enjazzzzz.web.app",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
 # ترويسات إضافية مطلوبة لمتصفحات الويب الحديثة
 CORS_ALLOW_HEADERS = [
     'accept',
