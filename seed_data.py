@@ -15,15 +15,15 @@ def seed():
     print("🌱 بدء إدراج البيانات التجريبية...")
 
     categories_data = [
-        {"name": "معاملات حكومية", "icon": "🏛️", "order": 1},
-        {"name": "خدمات المرور وتسجيل السيارات", "icon": "🚗", "order": 2},
-        {"name": "التوصيل وإنجاز المشاوير", "icon": "🛵", "order": 3},
-        {"name": "حجز مواعيد", "icon": "📅", "order": 4},
-        {"name": "خدمات قانونية", "icon": "⚖️", "order": 5},
-        {"name": "معاملات جوازات", "icon": "🛂", "order": 6},
-        {"name": "معاملات تقاعد", "icon": "👴", "order": 7},
-        {"name": "خدمات بلدية", "icon": "🏙️", "order": 8},
-        {"name": "توصيل مستندات", "icon": "📄", "order": 9},
+        {"name": "معاملات حكومية", "icon": "🏛️", "order": 1, "related_profession": "clearance_agent"},
+        {"name": "خدمات المرور وتسجيل السيارات", "icon": "🚗", "order": 2, "related_profession": "clearance_agent"},
+        {"name": "التوصيل وإنجاز المشاوير", "icon": "🛵", "order": 3, "related_profession": "other"},
+        {"name": "حجز مواعيد", "icon": "📅", "order": 4, "related_profession": "other"},
+        {"name": "خدمات قانونية", "icon": "⚖️", "order": 5, "related_profession": "lawyer"},
+        {"name": "معاملات جوازات", "icon": "🛂", "order": 6, "related_profession": "clearance_agent"},
+        {"name": "معاملات تقاعد", "icon": "👴", "order": 7, "related_profession": "clearance_agent"},
+        {"name": "خدمات بلدية", "icon": "🏙️", "order": 8, "related_profession": "clearance_agent"},
+        {"name": "توصيل مستندات", "icon": "📄", "order": 9, "related_profession": "other"},
     ]
     for cat in categories_data:
         Category.objects.get_or_create(name=cat["name"], defaults=cat)
