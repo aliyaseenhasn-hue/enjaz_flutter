@@ -35,22 +35,26 @@ class UserSerializer(serializers.ModelSerializer):
         return getattr(obj, 'role', 'customer')
 
     def get_full_name(self, obj):
-        name = f"{obj.first_name or ''} {obj.last_name or ''}".strip()
+        fname = obj.first_name or ''
+        lname = obj.last_name or ''
+        name = f"{fname} {lname}".strip()
         return name if name else obj.phone_number
 
     def get_profile_photo(self, obj):
-        if not obj.avatar: return None
-        request = self.context.get('request')
-        if request: return request.build_absolute_uri(obj.avatar.url)
-        return obj.avatar.url
+        try:
+            if obj.avatar and hasattr(obj.avatar, 'url'):
+                request = self.context.get('request')
+                if request: return request.build_absolute_uri(obj.avatar.url)
+                return obj.avatar.url
+        except: pass
+        return None
 
     def get_agent_profile(self, obj):
         try:
             profile = getattr(obj, 'agent_profile', None)
             if profile:
                 return AgentProfileSerializer(profile, context=self.context).data
-        except:
-            pass
+        except: pass
         return None
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -60,40 +64,28 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ['phone_number', 'first_name', 'last_name', 'role', 'password', 'password_confirm']
     def validate(self, data):
-        if data['password'] != data['password_confirm']: raise serializers.ValidationError("Password mismatch")
+        if data['password'] != data['password_confirm']: raise serializers.ValidationError("كلمة المرور غير متطابقة")
         return data
     def create(self, validated_data):
         validated_data.pop('password_confirm')
         password = validated_data.pop('password')
-        user = User(**validated_data); user.set_password(password); user.save()
+        user = User.objects.create_user(**validated_data)
+        user.set_password(password)
+        user.save()
         return user
 
 class TokenResponseSerializer(serializers.Serializer):
-    access = serializers.CharField(); refresh = serializers.CharField(); user = UserSerializer()
+    access = serializers.CharField()
+    refresh = serializers.CharField()
+    user = UserSerializer()
     @staticmethod
     def get_tokens(user, context=None):
         refresh = RefreshToken.for_user(user)
-        return {'access': str(refresh.access_token), 'refresh': str(refresh), 'user': UserSerializer(user, context=context).data}
-
-class AgentDirectorySerializer(serializers.ModelSerializer):
-    full_name = serializers.CharField(source='user.full_name', read_only=True)
-    class Meta:
-        model = AgentProfile
-        fields = ['id', 'full_name', 'rating', 'profession', 'city']
-
-class FavoriteSerializer(serializers.ModelSerializer):
-    agent = AgentDirectorySerializer(read_only=True)
-    class Meta:
-        model = Favorite
-        fields = ['id', 'agent', 'created_at']
-
-class PasswordResetRequestSerializer(serializers.Serializer):
-    phone_number = serializers.CharField()
-
-class PasswordResetConfirmSerializer(serializers.Serializer):
-    phone_number = serializers.CharField()
-    reset_code = serializers.CharField()
-    new_password = serializers.CharField()
+        return {
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': UserSerializer(user, context=context).data
+        }
 
 class CategorySerializer(serializers.ModelSerializer):
     name_ar = serializers.CharField(source='name')
@@ -115,6 +107,6 @@ class ProfessionalSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'title', 'city', 'rating', 'total_jobs']
 
 class ProfessionalDetailSerializer(ProfessionalSerializer):
-    portfolio_images = PortfolioItemSerializer(many=True, read_only=True, source='portfolio_images')
+    portfolio_images = PortfolioItemSerializer(many=True, read_only=True)
     class Meta(ProfessionalSerializer.Meta):
         fields = ProfessionalSerializer.Meta.fields + ['portfolio_images']
