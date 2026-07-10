@@ -109,27 +109,41 @@ class LoginView(APIView):
         if not phone_raw or not password:
             return Response({"detail": "يرجى إدخال رقم الهاتف وكلمة المرور."}, status=status.HTTP_400_BAD_REQUEST)
 
-        from .serializers import normalize_iraqi_phone
-        phone = normalize_iraqi_phone(phone_raw)
-
         try:
+            from .serializers import normalize_iraqi_phone
+            phone = normalize_iraqi_phone(phone_raw)
+            
+            # محاولة تسجيل الدخول
             user = authenticate(username=phone, password=password)
             if user:
                 if not user.is_active:
                     return Response({"detail": "هذا الحساب معطل."}, status=status.HTTP_400_BAD_REQUEST)
+                
                 refresh = RefreshToken.for_user(user)
                 user_role = 'admin' if user.is_superuser else getattr(user, 'role', 'customer')
+                
+                # جلب بيانات المستخدم عبر السيريالايزر مع السياق
+                user_data = UserSerializer(user, context={'request': request}).data
+                
                 return Response({
                     "access": str(refresh.access_token),
                     "refresh": str(refresh),
                     "role": user_role,
-                    "user": UserSerializer(user, context={'request': request}).data,
+                    "user": user_data,
                     "detail": "تم تسجيل الدخول بنجاح."
                 }, status=status.HTTP_200_OK)
+                
             return Response({"detail": "رقم الهاتف أو كلمة المرور غير صحيحة."}, status=status.HTTP_401_UNAUTHORIZED)
+            
         except Exception as e:
-            logger.error(f"Login error: {str(e)}")
-            return Response({"detail": f"حدث خطأ في النظام: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            import traceback
+            error_trace = traceback.format_exc()
+            logger.error(f"Login error trace: {error_trace}")
+            return Response({
+                "detail": "حدث خطأ في النظام",
+                "error": str(e),
+                "trace": error_trace if settings.DEBUG else None
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class GoogleAuthView(APIView):
