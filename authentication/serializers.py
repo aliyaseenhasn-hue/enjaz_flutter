@@ -87,6 +87,7 @@ class UserSerializer(serializers.ModelSerializer):
         try:
             profile = getattr(obj, 'agent_profile', None)
             if profile:
+                # نمرر الـ context لضمان بناء روابط الصور بشكل كامل
                 return AgentProfileSerializer(profile, context=self.context).data
         except: pass
         return None
