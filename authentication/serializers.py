@@ -18,17 +18,29 @@ def normalize_iraqi_phone(phone):
 class AgentProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = AgentProfile
-        fields = ['id', 'bio', 'is_verified', 'verification_status', 'balance', 'rating', 'total_jobs', 'id_card_front', 'id_card_back', 'profession', 'custom_profession', 'city']
+        fields = [
+            'id', 'bio', 'is_verified', 'verification_status', 
+            'balance', 'rating', 'total_jobs', 'id_card_front', 
+            'id_card_back', 'profession', 'custom_profession', 'city'
+        ]
 
 class UserSerializer(serializers.ModelSerializer):
     agent_profile = serializers.SerializerMethodField()
     profile_photo = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
     role = serializers.SerializerMethodField()
+    total_requests = serializers.SerializerMethodField()
+    pending_requests = serializers.SerializerMethodField()
+    is_verified = serializers.SerializerMethodField()
+    verification_status = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'phone_number', 'full_name', 'role', 'profile_photo', 'is_online', 'agent_profile']
+        fields = [
+            'id', 'phone_number', 'full_name', 'role', 'profile_photo', 
+            'is_online', 'agent_profile', 'wallet_balance', 
+            'total_requests', 'pending_requests', 'is_verified', 'verification_status'
+        ]
 
     def get_role(self, obj):
         if obj.is_superuser: return 'admin'
@@ -56,6 +68,26 @@ class UserSerializer(serializers.ModelSerializer):
                 return AgentProfileSerializer(profile, context=self.context).data
         except: pass
         return None
+
+    def get_total_requests(self, obj):
+        from services.models import ServiceRequest
+        if obj.role == 'agent':
+            return ServiceRequest.objects.filter(agent=obj).count()
+        return ServiceRequest.objects.filter(customer=obj).count()
+
+    def get_pending_requests(self, obj):
+        from services.models import ServiceRequest
+        if obj.role == 'agent':
+            return ServiceRequest.objects.filter(agent=obj, status='in_progress').count()
+        return ServiceRequest.objects.filter(customer=obj, status='pending').count()
+
+    def get_is_verified(self, obj):
+        profile = getattr(obj, 'agent_profile', None)
+        return profile.is_verified if profile else False
+
+    def get_verification_status(self, obj):
+        profile = getattr(obj, 'agent_profile', None)
+        return profile.verification_status if profile else None
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
