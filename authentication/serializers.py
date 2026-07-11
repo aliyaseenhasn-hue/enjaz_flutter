@@ -19,6 +19,7 @@ class AgentProfileSerializer(serializers.ModelSerializer):
     id_card_front = serializers.SerializerMethodField()
     id_card_back = serializers.SerializerMethodField()
     profession_display = serializers.SerializerMethodField()
+    portfolio_images = serializers.SerializerMethodField()
 
     class Meta:
         model = AgentProfile
@@ -26,7 +27,8 @@ class AgentProfileSerializer(serializers.ModelSerializer):
             'id', 'bio', 'is_verified', 'verification_status', 
             'balance', 'rating', 'total_jobs', 'id_card_front', 
             'id_card_back', 'profession', 'custom_profession', 'city',
-            'whatsapp_number', 'full_name_at_verification', 'profession_display'
+            'whatsapp_number', 'full_name_at_verification', 'profession_display',
+            'portfolio_images'
         ]
 
     def get_profession_display(self, obj):
@@ -36,19 +38,28 @@ class AgentProfileSerializer(serializers.ModelSerializer):
         try:
             if obj.id_card_front and hasattr(obj.id_card_front, 'url'):
                 request = self.context.get('request')
-                if request: return request.build_absolute_uri(obj.id_card_front.url)
+                if request:
+                    return request.build_absolute_uri(obj.id_card_front.url)
                 return obj.id_card_front.url
-        except: pass
+        except:
+            pass
         return None
 
     def get_id_card_back(self, obj):
         try:
             if obj.id_card_back and hasattr(obj.id_card_back, 'url'):
                 request = self.context.get('request')
-                if request: return request.build_absolute_uri(obj.id_card_back.url)
+                if request:
+                    return request.build_absolute_uri(obj.id_card_back.url)
                 return obj.id_card_back.url
-        except: pass
+        except:
+            pass
         return None
+    
+    def get_portfolio_images(self, obj):
+        """إرجاع صور المعرض مع URLs كاملة"""
+        images = obj.portfolio_images.all()
+        return PortfolioItemSerializer(images, many=True, context=self.context).data
 
 class UserSerializer(serializers.ModelSerializer):
     agent_profile = serializers.SerializerMethodField()
@@ -154,9 +165,23 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name_ar', 'icon', 'description', 'order']
 
 class PortfolioItemSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    
     class Meta:
         model = PortfolioImage
-        fields = ['id', 'caption', 'image']
+        fields = ['id', 'caption', 'image', 'uploaded_at']
+    
+    def get_image(self, obj):
+        try:
+            if obj.image and hasattr(obj.image, 'url'):
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(obj.image.url)
+                # إذا لم يكن هناك request، إرجع الـ URL النسبي على الأقل
+                return obj.image.url
+        except:
+            pass
+        return None
 
 class ProfessionalSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)

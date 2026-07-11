@@ -173,7 +173,48 @@ class PasswordResetRequestView(APIView):
 
 class UploadIdentityView(APIView):
     permission_classes = [IsAuthenticated]
-    def post(self, request): return Response(status=200)
+    def post(self, request):
+        try:
+            # الحصول على أو إنشاء AgentProfile
+            profile, created = AgentProfile.objects.get_or_create(user=request.user)
+            
+            # استخراج البيانات المرسلة
+            full_name = request.data.get('full_name', '')
+            whatsapp_number = request.data.get('whatsapp_number', '')
+            id_card_front = request.FILES.get('id_card_front')
+            id_card_back = request.FILES.get('id_card_back')
+            
+            # التحقق من الصور المطلوبة
+            if not id_card_front or not id_card_back:
+                return Response(
+                    {"detail": "يجب رفع صور وجه وظهر البطاقة"}, 
+                    status=400
+                )
+            
+            # تحديث بيانات التوثيق
+            if full_name:
+                profile.full_name_at_verification = full_name
+            if whatsapp_number:
+                profile.whatsapp_number = whatsapp_number
+            
+            # حفظ الصور
+            profile.id_card_front = id_card_front
+            profile.id_card_back = id_card_back
+            
+            # تعيين حالة التوثيق إلى قيد المراجعة
+            profile.verification_status = 'pending'
+            profile.save()
+            
+            return Response({
+                "detail": "✅ تم رفع بيانات التوثيق بنجاح، جاري مراجعة الطلب من قبل الإدارة.",
+                "profile": AgentProfileSerializer(profile, context={'request': request}).data
+            }, status=200)
+        except Exception as e:
+            logger.error(f"Error in UploadIdentityView: {str(e)}")
+            return Response(
+                {"detail": f"حدث خطأ: {str(e)}"}, 
+                status=500
+            )
 
 class AdminAllUsersView(APIView):
     permission_classes = [IsAuthenticated]
@@ -250,5 +291,61 @@ class FeaturedAgentsView(APIView):
         agents = AgentProfile.objects.filter(is_verified=True)[:10]
         return Response(AgentProfileSerializer(agents, many=True).data)
 
-def add_portfolio_image(request): return Response(status=200)
-def delete_portfolio_image(request, pk): return Response(status=200)
+def add_portfolio_image(request):
+    """إضافة صورة إلى معرض المندوب"""
+    if request.method == 'POST':
+        try:
+            if not request.user.is_authenticated:
+                return Response({"detail": "يجب تسجيل الدخول أولاً"}, status=401)
+            
+            # الحصول على AgentProfile
+            profile = getattr(request.user, 'agent_profile', None)
+            if not profile:
+                profile = AgentProfile.objects.create(user=request.user)
+            
+            # استخراج الصورة والعنوان
+            image = request.FILES.get('image')
+            caption = request.data.get('caption', '')
+            
+            if not image:
+                return Response({"detail": "يرجى اختيار صورة"}, status=400)
+            
+            # إنشاء صورة جديدة
+            portfolio_img = PortfolioImage.objects.create(
+                agent_profile=profile,
+                image=image,
+                caption=caption
+            )
+            
+            return Response({
+                "detail": "✅ تمت إضافة الصورة بنجاح",
+                "portfolio": PortfolioItemSerializer(portfolio_img).data
+            }, status=201)
+        except Exception as e:
+            logger.error(f"Error adding portfolio image: {str(e)}")
+            return Response({"detail": f"حدث خطأ: {str(e)}"}, status=500)
+    
+    return Response({"detail": "الطريقة غير مدعومة"}, status=405)
+
+
+def delete_portfolio_image(request, pk):
+    """حذف صورة من معرض المندوب"""
+    if request.method == 'DELETE':
+        try:
+            if not request.user.is_authenticated:
+                return Response({"detail": "يجب تسجيل الدخول أولاً"}, status=401)
+            
+            # التحقق من ملكية الصورة
+            portfolio_img = get_object_or_404(PortfolioImage, pk=pk)
+            if portfolio_img.agent_profile.user != request.user:
+                return Response({"detail": "ليس لديك صلاحية لحذف هذه الصورة"}, status=403)
+            
+            # حذف الصورة
+            portfolio_img.delete()
+            
+            return Response({"detail": "✅ تم حذف الصورة بنجاح"}, status=204)
+        except Exception as e:
+            logger.error(f"Error deleting portfolio image: {str(e)}")
+            return Response({"detail": f"حدث خطأ: {str(e)}"}, status=500)
+    
+    return Response({"detail": "الطريقة غير مدعومة"}, status=405)
