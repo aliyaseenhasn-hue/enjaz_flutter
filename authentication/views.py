@@ -123,7 +123,7 @@ class AgentProfileView(APIView):
     permission_classes = [IsAuthenticated]
     def put(self, request):
         profile, _ = AgentProfile.objects.get_or_create(user=request.user)
-        return Response(AgentProfileSerializer(profile).data)
+        return Response(AgentProfileSerializer(profile, context={'request': request}).data)
 
 class AgentVerificationView(APIView):
     permission_classes = [IsAuthenticated]
@@ -134,7 +134,7 @@ class AdminUserListView(APIView):
     def get(self, request):
         if not request.user.is_superuser: return Response(status=403)
         profiles = AgentProfile.objects.filter(verification_status='pending')
-        return Response(AgentProfileSerializer(profiles, many=True).data)
+        return Response(AgentProfileSerializer(profiles, many=True, context={'request': request}).data)
 
 class AdminApproveAgentView(APIView):
     permission_classes = [IsAuthenticated]
@@ -268,7 +268,7 @@ class ProfessionalListView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
         agents = AgentProfile.objects.filter(is_verified=True)
-        return Response(AgentProfileSerializer(agents, many=True).data)
+        return Response(AgentProfileSerializer(agents, many=True, context={'request': request}).data)
 
 class ProfessionalDetailView(APIView):
     permission_classes = [AllowAny]
@@ -289,7 +289,7 @@ class FeaturedAgentsView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
         agents = AgentProfile.objects.filter(is_verified=True)[:10]
-        return Response(AgentProfileSerializer(agents, many=True).data)
+        return Response(AgentProfileSerializer(agents, many=True, context={'request': request}).data)
 
 def add_portfolio_image(request):
     """إضافة صورة إلى معرض المندوب"""
