@@ -16,13 +16,35 @@ def normalize_iraqi_phone(phone):
     return digits
 
 class AgentProfileSerializer(serializers.ModelSerializer):
+    id_card_front = serializers.SerializerMethodField()
+    id_card_back = serializers.SerializerMethodField()
+
     class Meta:
         model = AgentProfile
         fields = [
             'id', 'bio', 'is_verified', 'verification_status', 
             'balance', 'rating', 'total_jobs', 'id_card_front', 
-            'id_card_back', 'profession', 'custom_profession', 'city'
+            'id_card_back', 'profession', 'custom_profession', 'city',
+            'whatsapp_number', 'full_name_at_verification'
         ]
+
+    def get_id_card_front(self, obj):
+        try:
+            if obj.id_card_front and hasattr(obj.id_card_front, 'url'):
+                request = self.context.get('request')
+                if request: return request.build_absolute_uri(obj.id_card_front.url)
+                return obj.id_card_front.url
+        except: pass
+        return None
+
+    def get_id_card_back(self, obj):
+        try:
+            if obj.id_card_back and hasattr(obj.id_card_back, 'url'):
+                request = self.context.get('request')
+                if request: return request.build_absolute_uri(obj.id_card_back.url)
+                return obj.id_card_back.url
+        except: pass
+        return None
 
 class UserSerializer(serializers.ModelSerializer):
     agent_profile = serializers.SerializerMethodField()

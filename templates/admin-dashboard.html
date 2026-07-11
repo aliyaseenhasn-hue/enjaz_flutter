@@ -10,12 +10,18 @@
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
     <link rel="stylesheet" href="{% static 'css/site.css' %}">
     <style>
-        /* أنماط خاصة بالنافذة المنبثقة والعناصر غير الموجودة في الملفات العامة */
         .admin-header {
             background: linear-gradient(135deg, #1e293b, #334155);
             color: white;
             padding: 20px;
             border-radius: 0 0 28px 28px;
+            position: relative;
+        }
+        .admin-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
         }
         .admin-badge {
             background: var(--danger);
@@ -24,33 +30,72 @@
             font-size: 0.75rem;
             font-weight: 700;
         }
-        .admin-nav {
+        .header-actions {
             display: flex;
             gap: 8px;
-            padding: 16px;
+            align-items: center;
+        }
+        .header-btn {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .header-btn:hover {
+            background: rgba(255,255,255,0.25);
+        }
+        .header-btn.logout-btn {
+            background: rgba(239, 68, 68, 0.3);
+            width: auto;
+            padding: 0 14px;
+            border-radius: 40px;
+            gap: 6px;
+        }
+        .header-btn.logout-btn:hover {
+            background: rgba(239, 68, 68, 0.5);
+        }
+        .admin-section-tabs {
+            display: flex;
+            gap: 8px;
+            padding: 16px 16px 0;
             overflow-x: auto;
         }
-        .admin-nav-item {
-            padding: 10px 16px;
+        .admin-section-tab {
+            padding: 10px 18px;
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius-full);
             font-size: 0.85rem;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-muted);
-            text-decoration: none;
+            cursor: pointer;
             white-space: nowrap;
             transition: var(--transition);
+            font-family: 'Tajawal', sans-serif;
         }
-        .admin-nav-item:hover, .admin-nav-item.active {
+        .admin-section-tab:hover, .admin-section-tab.active {
             background: var(--primary);
             color: white;
             border-color: var(--primary);
         }
+        .admin-tab-content {
+            display: none;
+        }
+        .admin-tab-content.active {
+            display: block;
+        }
         .stats-row {
             display: flex;
             gap: 12px;
-            padding: 0 16px;
+            padding: 16px;
             overflow-x: auto;
         }
         .admin-stat {
@@ -60,6 +105,16 @@
             padding: 16px;
             border: 1px solid var(--border);
             text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: block;
+            color: inherit;
+        }
+        .admin-stat:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-2px);
         }
         .admin-stat-icon {
             width: 48px;
@@ -71,6 +126,10 @@
             justify-content: center;
             font-size: 1.3rem;
         }
+        .admin-stat-icon.blue { background: var(--primary-muted); color: var(--primary); }
+        .admin-stat-icon.green { background: var(--success-bg); color: var(--success); }
+        .admin-stat-icon.orange { background: var(--warning-bg); color: var(--warning); }
+        .admin-stat-icon.red { background: #fee2e2; color: var(--danger); }
         .admin-stat-value {
             font-size: 1.5rem;
             font-weight: 800;
@@ -104,6 +163,11 @@
             align-items: center;
             padding: 14px 16px;
             border-bottom: 1px solid var(--border-light);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .table-row:hover {
+            background: var(--bg-gray);
         }
         .table-row:last-child { border-bottom: none; }
         .table-user { display: flex; align-items: center; gap: 10px; }
@@ -116,8 +180,10 @@
             align-items: center;
             justify-content: center;
             color: var(--primary);
+            flex-shrink: 0;
+            overflow: hidden;
         }
-        .table-user-info h4 { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); }
+        .table-user-info h4 { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); margin: 0; }
         .table-user-info span { font-size: 0.75rem; color: var(--text-muted); }
         .table-badge.pending {
             background: var(--warning-bg);
@@ -144,32 +210,30 @@
             background: var(--sky);
             color: white;
         }
-        .quick-actions-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            padding: 0 16px 100px;
-        }
-        .quick-action {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 16px;
+        .section-title {
+            font-size: 1rem;
+            font-weight: 800;
+            padding: 20px 16px 12px;
+            color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 12px;
-            text-decoration: none;
-            transition: var(--transition);
+            gap: 8px;
         }
-        .quick-action:hover {
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            transition: 0.2s;
+            box-sizing: border-box;
+        }
+        .form-control:focus {
             border-color: var(--primary);
-            box-shadow: var(--shadow-sm);
-            transform: translateY(-1px);
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
         }
-        .quick-action i { font-size: 1.3rem; color: var(--primary); }
-        .quick-action span { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
-
-        /* نافذة منبثقة محسّنة للأيفون */
         .modal {
             display: none;
             position: fixed;
@@ -265,6 +329,87 @@
         .btn-modal-close:hover {
             background: #e2e8f0;
         }
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .status-badge.verified { background: #d1fae5; color: #065f46; }
+        .status-badge.pending { background: var(--warning-bg); color: var(--warning); }
+        .status-badge.customer { background: var(--sky-light); color: var(--sky); }
+        .status-badge.admin { background: #e0e7ff; color: #4338ca; }
+        .empty-state {
+            text-align: center;
+            padding: 30px 16px;
+            color: var(--text-muted);
+        }
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .users-table th, .users-table td {
+            padding: 10px 8px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .users-table th {
+            background: var(--bg-gray);
+            font-weight: 800;
+            font-size: 0.75rem;
+        }
+        .verify-btn {
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            border: none;
+            cursor: pointer;
+            margin: 2px;
+            font-family: 'Tajawal', sans-serif;
+        }
+        .verify-btn:hover {
+            background: var(--primary-dark);
+        }
+        .verify-btn.danger {
+            background: #64748b;
+        }
+        .verify-btn.warning {
+            background: #f59e0b;
+        }
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 0 16px;
+        }
+        .filter-bar input, .filter-bar select {
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.8rem;
+        }
+        .btn-search {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 700;
+        }
         @media (max-width: 480px) {
             .modal-content {
                 padding: 16px;
@@ -277,104 +422,222 @@
                 padding: 8px 16px;
                 font-size: 0.85rem;
             }
+            .stats-row {
+                gap: 8px;
+            }
+            .admin-stat {
+                min-width: 120px;
+                padding: 12px;
+            }
         }
     </style>
 </head>
 <body>
 
+<!-- الهيدر مع أزرار الرجوع وتسجيل الخروج -->
 <div class="admin-header">
-    <div class="admin-info">
-        <div>
-            <h1>لوحة التحكم <i class="fa-solid fa-shield-halved"></i></h1>
-            <p style="font-size:0.85rem; opacity:0.8; margin-top:4px;">مرحباً، المشرف العام</p>
+    <div class="admin-header-top">
+        <div class="header-actions">
+            <button class="header-btn" onclick="goBack()" title="رجوع">
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            <div>
+                <h1 style="font-size:1.2rem; margin:0;">لوحة التحكم <i class="fa-solid fa-shield-halved"></i></h1>
+                <p style="font-size:0.8rem; opacity:0.8; margin:2px 0 0;">مرحباً، المشرف العام</p>
+            </div>
         </div>
-        <span class="admin-badge">مشرف</span>
-    </div>
-</div>
-
-<div class="admin-nav">
-    <a href="/admin/dashboard/" class="admin-nav-item active">الرئيسية</a>
-    <a href="/admin/users/" class="admin-nav-item">المستخدمين</a>
-    <a href="/admin/content/" class="admin-nav-item">المحتوى</a>
-    <a href="/admin/reports/" class="admin-nav-item">البلاغات</a>
-    <a href="/admin/analytics/" class="admin-nav-item">التحليلات</a>
-</div>
-
-<!-- إحصائيات سريعة -->
-<div class="stats-row">
-    <div class="admin-stat">
-        <div class="admin-stat-icon blue"><i class="fa-solid fa-users"></i></div>
-        <div class="admin-stat-value" id="totalUsers">0</div>
-        <div class="admin-stat-label">إجمالي المستخدمين</div>
-    </div>
-    <div class="admin-stat">
-        <div class="admin-stat-icon green"><i class="fa-solid fa-handshake"></i></div>
-        <div class="admin-stat-value" id="completedRequests">0</div>
-        <div class="admin-stat-label">طلبات مكتملة</div>
-    </div>
-    <div class="admin-stat">
-        <div class="admin-stat-icon orange"><i class="fa-solid fa-clock"></i></div>
-        <div class="admin-stat-value" id="pendingRequests">0</div>
-        <div class="admin-stat-label">طلبات معلقة</div>
-    </div>
-    <div class="admin-stat">
-        <div class="admin-stat-icon red"><i class="fa-solid fa-flag"></i></div>
-        <div class="admin-stat-value" id="newReports">0</div>
-        <div class="admin-stat-label">بلاغات جديدة</div>
-    </div>
-</div>
-
-<!-- طلبات توثيق المهنيين -->
-<div class="admin-section">
-    <div class="section-title">
-        <i class="fa-solid fa-user-clock" style="color:var(--warning);"></i>
-        طلبات توثيق المهنيين
-    </div>
-    <div class="admin-table" id="pendingAgentsTable">
-        <div class="table-header">
-            <span class="table-title">جاري التحميل...</span>
+        <div class="header-actions">
+            <span class="admin-badge">مشرف</span>
+            <button class="header-btn logout-btn" onclick="logoutAdmin()" title="تسجيل الخروج">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span style="font-size:0.75rem;">خروج</span>
+            </button>
         </div>
     </div>
 </div>
 
-<!-- قسم إدارة كافة المستخدمين -->
-<div class="admin-section">
+<!-- تبويبات الصفحة الواحدة -->
+<div class="admin-section-tabs">
+    <div class="admin-section-tab active" onclick="switchTab('dashboard')" data-tab="dashboard">
+        <i class="fa-solid fa-chart-pie"></i> الرئيسية
+    </div>
+    <div class="admin-section-tab" onclick="switchTab('users')" data-tab="users">
+        <i class="fa-solid fa-users"></i> المستخدمين
+    </div>
+    <div class="admin-section-tab" onclick="switchTab('requests')" data-tab="requests">
+        <i class="fa-solid fa-briefcase"></i> الطلبات
+    </div>
+    <div class="admin-section-tab" onclick="switchTab('verification')" data-tab="verification">
+        <i class="fa-solid fa-user-check"></i> التوثيق
+    </div>
+    <div class="admin-section-tab" onclick="switchTab('analytics')" data-tab="analytics">
+        <i class="fa-solid fa-chart-line"></i> التحليلات
+    </div>
+</div>
+
+<!-- ====== تبويب الرئيسية (لوحة المعلومات) ====== -->
+<div id="tab-dashboard" class="admin-tab-content active">
+    <!-- إحصائيات سريعة - قابلة للضغط -->
+    <div class="stats-row">
+        <a class="admin-stat" onclick="switchTab('users')" style="cursor:pointer;">
+            <div class="admin-stat-icon blue"><i class="fa-solid fa-users"></i></div>
+            <div class="admin-stat-value" id="totalUsers">0</div>
+            <div class="admin-stat-label">إجمالي المستخدمين</div>
+        </a>
+        <a class="admin-stat" onclick="switchTab('requests')" style="cursor:pointer;">
+            <div class="admin-stat-icon green"><i class="fa-solid fa-handshake"></i></div>
+            <div class="admin-stat-value" id="completedRequests">0</div>
+            <div class="admin-stat-label">طلبات مكتملة</div>
+        </a>
+        <a class="admin-stat" onclick="switchTab('requests')" style="cursor:pointer;">
+            <div class="admin-stat-icon orange"><i class="fa-solid fa-clock"></i></div>
+            <div class="admin-stat-value" id="pendingRequests">0</div>
+            <div class="admin-stat-label">طلبات معلقة</div>
+        </a>
+        <a class="admin-stat" onclick="switchTab('verification')" style="cursor:pointer;">
+            <div class="admin-stat-icon red"><i class="fa-solid fa-flag"></i></div>
+            <div class="admin-stat-value" id="newReports">0</div>
+            <div class="admin-stat-label">بانتظار التوثيق</div>
+        </a>
+    </div>
+
+    <!-- ملخص سريع -->
+    <div class="admin-section">
+        <div class="section-title">
+            <i class="fa-solid fa-bolt" style="color:var(--warning);"></i>
+            إجراءات سريعة
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; padding:0 16px 20px;">
+            <div class="admin-stat" onclick="switchTab('users')" style="min-width:auto; cursor:pointer; display:flex; align-items:center; gap:10px; text-align:right;">
+                <i class="fa-solid fa-users-cog" style="font-size:1.3rem; color:var(--primary);"></i>
+                <span style="font-size:0.85rem; font-weight:600;">إدارة المستخدمين</span>
+            </div>
+            <div class="admin-stat" onclick="switchTab('verification')" style="min-width:auto; cursor:pointer; display:flex; align-items:center; gap:10px; text-align:right;">
+                <i class="fa-solid fa-id-card" style="font-size:1.3rem; color:var(--warning);"></i>
+                <span style="font-size:0.85rem; font-weight:600;">طلبات التوثيق</span>
+            </div>
+            <div class="admin-stat" onclick="switchTab('requests')" style="min-width:auto; cursor:pointer; display:flex; align-items:center; gap:10px; text-align:right;">
+                <i class="fa-solid fa-briefcase" style="font-size:1.3rem; color:var(--sky);"></i>
+                <span style="font-size:0.85rem; font-weight:600;">طلبات الخدمات</span>
+            </div>
+            <div class="admin-stat" onclick="switchTab('analytics')" style="min-width:auto; cursor:pointer; display:flex; align-items:center; gap:10px; text-align:right;">
+                <i class="fa-solid fa-chart-simple" style="font-size:1.3rem; color:var(--success);"></i>
+                <span style="font-size:0.85rem; font-weight:600;">الإحصائيات</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- آخر طلبات التوثيق -->
+    <div class="admin-section">
+        <div class="section-title">
+            <i class="fa-solid fa-user-clock" style="color:var(--warning);"></i>
+            آخر طلبات التوثيق
+        </div>
+        <div class="admin-table" id="pendingAgentsTable">
+            <div class="table-header">
+                <span class="table-title">جاري التحميل...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- آخر المستخدمين -->
+    <div class="admin-section">
+        <div class="section-title">
+            <i class="fa-solid fa-users" style="color:var(--primary);"></i>
+            آخر المستخدمين المسجلين
+        </div>
+        <div class="admin-table" id="recentUsersTable">
+            <div class="table-header">
+                <span class="table-title">جاري التحميل...</span>
+            </div>
+        </div>
+    </div>
+
+    <div style="height:30px;"></div>
+</div>
+
+<!-- ====== تبويب إدارة المستخدمين ====== -->
+<div id="tab-users" class="admin-tab-content">
     <div class="section-title">
         <i class="fa-solid fa-users" style="color:var(--primary);"></i>
-        كافة المستخدمين والمهنيين
+        كافة المستخدمين
     </div>
-    <div style="padding: 0 16px 16px;">
-        <input type="text" id="userSearch" class="form-control" placeholder="بحث باسم أو رقم هاتف..." style="margin-bottom:12px;">
+    <div class="filter-bar">
+        <input type="text" id="userSearch" placeholder="بحث باسم أو رقم هاتف...">
+        <select id="roleFilter">
+            <option value="all">جميع الأدوار</option>
+            <option value="customer">طالب خدمة</option>
+            <option value="agent">مقدم خدمة</option>
+            <option value="admin">مدير</option>
+        </select>
+        <select id="statusFilter">
+            <option value="all">جميع الحالات</option>
+            <option value="verified">موثق</option>
+            <option value="pending">بانتظار التوثيق</option>
+        </select>
+        <button class="btn-search" onclick="filterUsers()">تصفية</button>
     </div>
     <div class="admin-table" id="allUsersTable">
         <div class="table-header">
             <span class="table-title">جاري التحميل...</span>
         </div>
     </div>
+    <div style="height:30px;"></div>
 </div>
 
-<!-- قسم إدارة طلبات الخدمات -->
-<div class="admin-section">
+<!-- ====== تبويب طلبات الخدمات ====== -->
+<div id="tab-requests" class="admin-tab-content">
     <div class="section-title">
         <i class="fa-solid fa-briefcase" style="color:var(--sky);"></i>
-        طلبات الخدمات (المنشورة)
+        طلبات الخدمات
     </div>
     <div class="admin-table" id="allRequestsTable">
         <div class="table-header">
             <span class="table-title">جاري التحميل...</span>
         </div>
     </div>
+    <div style="height:30px;"></div>
 </div>
 
-<!-- الإجراءات السريعة (تمت إضافة زر البلاغات) -->
-<div class="admin-section">
-    <div class="section-title">إجراءات سريعة</div>
-    <div class="quick-actions-grid">
-        <a href="/admin/users/" class="quick-action"><i class="fa-solid fa-users-cog"></i><span>إدارة المستخدمين</span></a>
-        <a href="/admin/content/" class="quick-action"><i class="fa-solid fa-tags"></i><span>إدارة التصنيفات</span></a>
-        <a href="/admin/reports/" class="quick-action"><i class="fa-solid fa-flag"></i><span>عرض البلاغات</span></a>
-        <a href="/admin/analytics/" class="quick-action"><i class="fa-solid fa-gears"></i><span>إعدادات النظام</span></a>
+<!-- ====== تبويب طلبات التوثيق ====== -->
+<div id="tab-verification" class="admin-tab-content">
+    <div class="section-title">
+        <i class="fa-solid fa-id-card" style="color:var(--warning);"></i>
+        طلبات توثيق المهنيين
     </div>
+    <div class="admin-table" id="verificationTable">
+        <div class="table-header">
+            <span class="table-title">جاري التحميل...</span>
+        </div>
+    </div>
+    <div style="height:30px;"></div>
+</div>
+
+<!-- ====== تبويب التحليلات ====== -->
+<div id="tab-analytics" class="admin-tab-content">
+    <div class="section-title">
+        <i class="fa-solid fa-chart-simple" style="color:var(--primary);"></i>
+        إحصائيات المنصة
+    </div>
+    <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; padding: 20px 16px;">
+        <div style="background: var(--primary-muted); padding: 20px; border-radius: 16px; min-width: 150px; text-align:center;">
+            <div style="font-size: 2rem; font-weight: 800;" id="analyticsTotalUsers">0</div>
+            <div style="font-size:0.85rem; color:var(--text-muted);">إجمالي المستخدمين</div>
+        </div>
+        <div style="background: var(--success-bg); padding: 20px; border-radius: 16px; min-width: 150px; text-align:center;">
+            <div style="font-size: 2rem; font-weight: 800;" id="analyticsVerifiedAgents">0</div>
+            <div style="font-size:0.85rem; color:var(--text-muted);">المهنيين الموثقين</div>
+        </div>
+        <div style="background: var(--warning-bg); padding: 20px; border-radius: 16px; min-width: 150px; text-align:center;">
+            <div style="font-size: 2rem; font-weight: 800;" id="analyticsPendingVerification">0</div>
+            <div style="font-size:0.85rem; color:var(--text-muted);">بانتظار التوثيق</div>
+        </div>
+        <div style="background: var(--sky-light); padding: 20px; border-radius: 16px; min-width: 150px; text-align:center;">
+            <div style="font-size: 2rem; font-weight: 800;" id="analyticsCompletedRequests">0</div>
+            <div style="font-size:0.85rem; color:var(--text-muted);">طلبات مكتملة</div>
+        </div>
+    </div>
+    <div style="height:30px;"></div>
 </div>
 
 <!-- نافذة منبثقة لعرض تفاصيل طلب التوثيق -->
@@ -384,19 +647,21 @@
         <p><strong>الاسم الحالي:</strong> <span id="modalName"></span></p>
         <p><strong>الاسم الكامل (للتوثيق):</strong> <span id="modalVerifiedName" style="color:#2563eb; font-weight:bold;"></span></p>
         <p><strong>المهنة:</strong> <span id="modalProfession"></span></p>
-        <p><strong>رقم الهاتف (الأساسي):</strong> <span id="modalPhone"></span></p>
-        <p><strong>رقم الواتساب (للتواصل):</strong> <span id="modalWhatsapp" style="color:#059669; font-weight:bold;"></span></p>
+        <p><strong>رقم الهاتف:</strong> <span id="modalPhone"></span></p>
+        <p><strong>رقم الواتساب:</strong> <span id="modalWhatsapp" style="color:#059669; font-weight:bold;"></span></p>
         <div class="modal-image-wrapper">
             <div class="modal-image-label">وجه البطاقة الموحدة</div>
             <img id="modalIdFront" class="modal-image" style="display:none;">
+            <div id="modalIdFrontPlaceholder" style="color:#94a3b8; font-size:0.85rem; padding:10px;">لا توجد صورة للوجه</div>
         </div>
         <div class="modal-image-wrapper">
             <div class="modal-image-label">ظهر البطاقة الموحدة</div>
             <img id="modalIdBack" class="modal-image" style="display:none;">
+            <div id="modalIdBackPlaceholder" style="color:#94a3b8; font-size:0.85rem; padding:10px;">لا توجد صورة للظهر</div>
         </div>
         <div class="modal-buttons">
-            <button id="modalApproveBtn" class="btn-modal-approve">موافقة</button>
-            <button id="modalRejectBtn" class="btn-modal-reject">رفض</button>
+            <button id="modalApproveBtn" class="btn-modal-approve">✅ موافقة</button>
+            <button id="modalRejectBtn" class="btn-modal-reject">❌ رفض</button>
             <button id="modalCloseBtn" class="btn-modal-close">إغلاق</button>
         </div>
     </div>
@@ -409,21 +674,67 @@
     }
 
     let currentAgentId = null;
+    let allUsersData = [];
+    let allRequestsData = [];
 
+    // ========== التنقل بين التبويبات ==========
+    function switchTab(tabName) {
+        document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.admin-section-tab').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tabName).classList.add('active');
+        document.querySelector(`.admin-section-tab[data-tab="${tabName}"]`).classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ========== الرجوع ==========
+    function goBack() {
+        window.history.back();
+    }
+
+    // ========== تسجيل الخروج ==========
+    function logoutAdmin() {
+        if (!confirm('هل تريد تسجيل الخروج من لوحة التحكم؟')) return;
+        localStorage.removeItem('enjaz_pwa_token');
+        localStorage.removeItem('enjaz_pwa_refresh');
+        window.location.href = '/signin/';
+    }
+
+    // ========== أدوات ==========
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
+            if (m === '&') return '&';
+            if (m === '<') return '<';
+            if (m === '>') return '>';
             return m;
         });
     }
 
-    let allUsersData = [];
+    // ========== تحميل الإحصائيات ==========
+    async function loadStats() {
+        try {
+            const res = await fetch('/api/admin/stats/', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const stats = await res.json();
+                document.getElementById('totalUsers').innerText = stats.total_users || 0;
+                document.getElementById('completedRequests').innerText = stats.completed_requests || 0;
+                document.getElementById('pendingRequests').innerText = stats.pending_requests || 0;
+                document.getElementById('newReports').innerText = stats.pending_verifications || 0;
+                // تحليلات
+                document.getElementById('analyticsTotalUsers').innerText = stats.total_users || 0;
+                document.getElementById('analyticsVerifiedAgents').innerText = stats.verified_agents || 0;
+                document.getElementById('analyticsPendingVerification').innerText = stats.pending_verifications || 0;
+                document.getElementById('analyticsCompletedRequests').innerText = stats.completed_requests || 0;
+            }
+        } catch(e) {
+            console.error(e);
+        }
+    }
 
+    // ========== تحميل وعرض المستخدمين ==========
     async function loadAllUsers() {
-        const container = document.getElementById('allUsersTable');
         try {
             const res = await fetch('/api/admin/all-users/', {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -431,9 +742,11 @@
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             allUsersData = await res.json();
             renderUsers(allUsersData);
+            renderRecentUsers(allUsersData);
+            renderVerificationTable();
         } catch (error) {
             console.error(error);
-            container.innerHTML = `<div class="table-header"><span class="table-title">خطأ في تحميل بيانات المستخدمين</span></div>`;
+            document.getElementById('allUsersTable').innerHTML = `<div class="table-header"><span class="table-title">خطأ في تحميل بيانات المستخدمين</span></div>`;
         }
     }
 
@@ -446,21 +759,20 @@
         let html = `<div class="table-header"><span class="table-title">عرض ${users.length} مستخدم</span></div>`;
         users.forEach(user => {
             const roleText = user.role === 'agent' ? 'مهني' : user.role === 'admin' ? 'مشرف' : 'زبون';
-            const statusClass = user.verification_status || 'none';
             const statusText = user.role === 'agent' ? (user.is_verified ? 'موثق' : 'غير موثق') : '-';
-
+            const statusClass = user.is_verified ? 'verified' : (user.role === 'agent' ? 'pending' : 'customer');
             html += `
-                <div class="table-row">
+                <div class="table-row" onclick="showUserDetails(${user.id})">
                     <div class="table-user">
-                        <div class="table-avatar">${user.avatar ? `<img src="${user.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : '<i class="fa-solid fa-user"></i>'}</div>
+                        <div class="table-avatar">${user.profile_photo ? `<img src="${user.profile_photo}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : '<i class="fa-solid fa-user"></i>'}</div>
                         <div class="table-user-info">
-                            <h4>${escapeHtml(user.name)}</h4>
-                            <span>${roleText} • ${user.phone}</span>
+                            <h4>${escapeHtml(user.full_name)}</h4>
+                            <span>${roleText} • ${escapeHtml(user.phone_number || '')}</span>
                         </div>
                     </div>
-                    <span style="font-size:0.75rem; color:${user.is_verified ? '#0d9488' : '#64748b'}">${statusText}</span>
+                    <span class="status-badge ${statusClass}">${statusText}</span>
                     <div class="table-actions">
-                        <button class="table-btn view" onclick="showUserDetails(${user.id})" title="عرض التفاصيل">
+                        <button class="table-btn view" onclick="event.stopPropagation(); showUserDetails(${user.id})" title="عرض التفاصيل">
                             <i class="fa-solid fa-id-card"></i>
                         </button>
                     </div>
@@ -469,56 +781,102 @@
         container.innerHTML = html;
     }
 
-    document.getElementById('userSearch').addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtered = allUsersData.filter(u =>
-            (u.name && u.name.toLowerCase().includes(term)) || (u.phone && u.phone.includes(term))
-        );
+    function renderRecentUsers(users) {
+        const container = document.getElementById('recentUsersTable');
+        const recent = users.slice(-5).reverse();
+        if (!recent.length) {
+            container.innerHTML = `<div class="table-header"><span class="table-title">لا يوجد مستخدمون</span></div>`;
+            return;
+        }
+        let html = `<div class="table-header"><span class="table-title">آخر 5 مستخدمين</span></div>`;
+        recent.forEach(user => {
+            const roleText = user.role === 'agent' ? 'مهني' : user.role === 'admin' ? 'مشرف' : 'زبون';
+            html += `
+                <div class="table-row" onclick="showUserDetails(${user.id})">
+                    <div class="table-user">
+                        <div class="table-avatar">${user.profile_photo ? `<img src="${user.profile_photo}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : '<i class="fa-solid fa-user"></i>'}</div>
+                        <div class="table-user-info">
+                            <h4>${escapeHtml(user.full_name)}</h4>
+                            <span>${roleText}</span>
+                        </div>
+                    </div>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">${escapeHtml(user.phone_number || '')}</span>
+                </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    // ========== فلترة المستخدمين ==========
+    function filterUsers() {
+        const searchTerm = document.getElementById('userSearch').value.trim().toLowerCase();
+        const roleFilter = document.getElementById('roleFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+
+        let filtered = allUsersData.filter(user => {
+            if (searchTerm && !(user.full_name && user.full_name.toLowerCase().includes(searchTerm)) && !(user.phone_number && user.phone_number.includes(searchTerm))) return false;
+            if (roleFilter !== 'all' && user.role !== roleFilter) return false;
+            if (statusFilter !== 'all') {
+                if (statusFilter === 'verified' && !(user.role === 'agent' && user.is_verified === true)) return false;
+                if (statusFilter === 'pending' && !(user.role === 'agent' && user.is_verified === false)) return false;
+            }
+            return true;
+        });
         renderUsers(filtered);
-    });
+    }
 
+    document.getElementById('userSearch').addEventListener('input', filterUsers);
+    document.getElementById('roleFilter').addEventListener('change', filterUsers);
+    document.getElementById('statusFilter').addEventListener('change', filterUsers);
+
+    // ========== عرض تفاصيل المستخدم (مودال) ==========
     async function showUserDetails(userId) {
-        // البحث في قائمة كافة المستخدمين
         let user = allUsersData.find(u => u.id == userId);
-
-        // إذا لم نجد المستخدم (ربما لم يتم تحميل allUsersData بعد)، نحاول جلبه من المصدر
         if (!user) {
-             try {
+            try {
                 const res = await fetch('/api/admin/all-users/', { headers: { 'Authorization': `Bearer ${token}` } });
                 const all = await res.json();
                 allUsersData = all;
                 user = allUsersData.find(u => u.id == userId);
-             } catch(e) {}
+            } catch(e) {}
         }
-
         if (!user) return;
 
         currentAgentId = user.id;
-        document.getElementById('modalName').innerText = user.name || 'مستخدم';
-        document.getElementById('modalVerifiedName').innerText = user.full_name_at_verification || 'لم يرفع اسماً';
-        document.getElementById('modalProfession').innerText = user.role === 'agent' ? 'مهني' : user.role === 'admin' ? 'مشرف' : 'زبون';
-        document.getElementById('modalPhone').innerText = user.phone || 'غير متوفر';
-        document.getElementById('modalWhatsapp').innerText = user.whatsapp_number || 'غير متوفر';
+        document.getElementById('modalName').innerText = user.full_name || 'مستخدم';
+        
+        // الحصول على بيانات التوثيق من agent_profile
+        const agentProfile = user.agent_profile || {};
+        document.getElementById('modalVerifiedName').innerText = agentProfile.full_name_at_verification || 'لم يرفع اسماً';
+        document.getElementById('modalProfession').innerText = agentProfile.profession || (user.role === 'agent' ? 'مهني' : (user.role === 'admin' ? 'مشرف' : 'زبون'));
+        document.getElementById('modalPhone').innerText = user.phone_number || 'غير متوفر';
+        document.getElementById('modalWhatsapp').innerText = agentProfile.whatsapp_number || 'غير متوفر';
 
         const frontImg = document.getElementById('modalIdFront');
         const backImg = document.getElementById('modalIdBack');
+        const frontPlaceholder = document.getElementById('modalIdFrontPlaceholder');
+        const backPlaceholder = document.getElementById('modalIdBackPlaceholder');
 
-        if (user.id_card_front) {
-            frontImg.src = user.id_card_front;
+        // إصلاح مشكلة ظهور صور الهوية - استخدام agent_profile
+        if (agentProfile.id_card_front) {
+            frontImg.src = agentProfile.id_card_front;
             frontImg.style.display = 'block';
+            frontPlaceholder.style.display = 'none';
         } else {
             frontImg.style.display = 'none';
+            frontPlaceholder.style.display = 'block';
         }
-        if (user.id_card_back) {
-            backImg.src = user.id_card_back;
+        if (agentProfile.id_card_back) {
+            backImg.src = agentProfile.id_card_back;
             backImg.style.display = 'block';
+            backPlaceholder.style.display = 'none';
         } else {
             backImg.style.display = 'none';
+            backPlaceholder.style.display = 'block';
         }
 
         const approveBtn = document.getElementById('modalApproveBtn');
         const rejectBtn = document.getElementById('modalRejectBtn');
-        if (user.role === 'agent' && user.verification_status === 'pending') {
+        if (user.role === 'agent' && user.is_verified === false) {
             approveBtn.style.display = 'inline-block';
             rejectBtn.style.display = 'inline-block';
         } else {
@@ -529,6 +887,38 @@
         document.getElementById('detailsModal').style.display = 'flex';
     }
 
+    // ========== طلبات التوثيق ==========
+    function renderVerificationTable() {
+        const container = document.getElementById('verificationTable');
+        const pending = allUsersData.filter(u => u.role === 'agent' && u.is_verified === false);
+        
+        if (!pending.length) {
+            container.innerHTML = `<div class="table-header"><span class="table-title">لا يوجد مهنيون بانتظار التوثيق ✅</span></div>`;
+            return;
+        }
+        let html = `<div class="table-header"><span class="table-title">${pending.length} مهني بانتظار التوثيق</span></div>`;
+        pending.forEach(agent => {
+            html += `
+                <div class="table-row" onclick="showUserDetails(${agent.id})">
+                    <div class="table-user">
+                        <div class="table-avatar">${agent.profile_photo ? `<img src="${agent.profile_photo}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : '<i class="fa-solid fa-user"></i>'}</div>
+                        <div class="table-user-info">
+                            <h4>${escapeHtml(agent.full_name)}</h4>
+                            <span>${escapeHtml((agent.agent_profile && agent.agent_profile.profession) || 'مهني')}</span>
+                        </div>
+                    </div>
+                    <span class="table-badge pending">بانتظار</span>
+                    <div class="table-actions">
+                        <button class="table-btn view" onclick="event.stopPropagation(); showUserDetails(${agent.id})" title="عرض التفاصيل">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    // ========== عرض طلبات التوثيق في الصفحة الرئيسية ==========
     async function loadPendingAgents() {
         const container = document.getElementById('pendingAgentsTable');
         try {
@@ -539,23 +929,23 @@
             const agents = await res.json();
 
             if (!agents.length) {
-                container.innerHTML = `<div class="table-header"><span class="table-title">لا يوجد مهنيون بانتظار التوثيق</span></div>`;
+                container.innerHTML = `<div class="table-header"><span class="table-title">لا يوجد مهنيون بانتظار التوثيق ✅</span></div>`;
                 return;
             }
             let html = `<div class="table-header"><span class="table-title">${agents.length} مهني بانتظار التوثيق</span></div>`;
             agents.forEach(agent => {
                 html += `
-                    <div class="table-row" data-agent-id="${agent.id}">
+                    <div class="table-row" onclick="showUserDetails(${agent.id})">
                         <div class="table-user">
                             <div class="table-avatar"><i class="fa-solid fa-user"></i></div>
                             <div class="table-user-info">
-                                <h4>${escapeHtml(agent.name)}</h4>
+                                <h4>${escapeHtml(agent.name || agent.full_name || 'مهني')}</h4>
                                 <span>${escapeHtml(agent.profession || 'مهني')}</span>
                             </div>
                         </div>
                         <span class="table-badge pending">بانتظار</span>
                         <div class="table-actions">
-                            <button class="table-btn view" onclick="showUserDetails(${agent.id})" title="عرض التفاصيل">
+                            <button class="table-btn view" onclick="event.stopPropagation(); showUserDetails(${agent.id})" title="عرض التفاصيل">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
                         </div>
@@ -568,6 +958,7 @@
         }
     }
 
+    // ========== الموافقة والرفض ==========
     async function approveAgent(agentId) {
         if (!confirm('هل تريد توثيق هذا المهني؟')) return;
         try {
@@ -579,41 +970,7 @@
             if (res.ok) {
                 alert('✅ تم توثيق المهني بنجاح');
                 document.getElementById('detailsModal').style.display = 'none';
-                async function loadServiceRequests() {
-        const container = document.getElementById('allRequestsTable');
-        try {
-            const res = await fetch('/api/services/admin/requests/', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const requests = await res.json();
-
-            if (!requests.length) {
-                container.innerHTML = `<div class="table-header"><span class="table-title">لا يوجد طلبات خدمات حالياً</span></div>`;
-                return;
-            }
-            let html = `<div class="table-header"><span class="table-title">إجمالي الطلبات: ${requests.length}</span></div>`;
-            requests.forEach(req => {
-                html += `
-                    <div class="table-row">
-                        <div style="flex:1;">
-                            <h4 style="font-size:0.9rem; margin-bottom:4px;">${escapeHtml(req.title)}</h4>
-                            <div style="font-size:0.75rem; color:#64748b;">الزبون: ${escapeHtml(req.customer_name)} | المهني: ${escapeHtml(req.agent_name || 'بانتظار')}</div>
-                        </div>
-                        <span class="status-badge ${req.status}" style="margin:0 12px; font-size:0.7rem;">${escapeHtml(req.status_display)}</span>
-                        <button class="table-btn view" onclick="window.location.href='/request-details/${req.id}/'">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
-                    </div>`;
-            });
-            container.innerHTML = html;
-        } catch (error) {
-            console.error(error);
-            container.innerHTML = `<div class="table-header"><span class="table-title">خطأ في تحميل طلبات الخدمات</span></div>`;
-        }
-    }
-
-    loadPendingAgents();
+                refreshAll();
             } else {
                 alert('❌ ' + (data.detail || data.error || 'فشل التوثيق'));
             }
@@ -633,41 +990,7 @@
             if (res.ok) {
                 alert('❌ تم رفض طلب التوثيق');
                 document.getElementById('detailsModal').style.display = 'none';
-                async function loadServiceRequests() {
-        const container = document.getElementById('allRequestsTable');
-        try {
-            const res = await fetch('/api/services/admin/requests/', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const requests = await res.json();
-
-            if (!requests.length) {
-                container.innerHTML = `<div class="table-header"><span class="table-title">لا يوجد طلبات خدمات حالياً</span></div>`;
-                return;
-            }
-            let html = `<div class="table-header"><span class="table-title">إجمالي الطلبات: ${requests.length}</span></div>`;
-            requests.forEach(req => {
-                html += `
-                    <div class="table-row">
-                        <div style="flex:1;">
-                            <h4 style="font-size:0.9rem; margin-bottom:4px;">${escapeHtml(req.title)}</h4>
-                            <div style="font-size:0.75rem; color:#64748b;">الزبون: ${escapeHtml(req.customer_name)} | المهني: ${escapeHtml(req.agent_name || 'بانتظار')}</div>
-                        </div>
-                        <span class="status-badge ${req.status}" style="margin:0 12px; font-size:0.7rem;">${escapeHtml(req.status_display)}</span>
-                        <button class="table-btn view" onclick="window.location.href='/request-details/${req.id}/'">
-                            <i class="fa-solid fa-eye"></i>
-                        </button>
-                    </div>`;
-            });
-            container.innerHTML = html;
-        } catch (error) {
-            console.error(error);
-            container.innerHTML = `<div class="table-header"><span class="table-title">خطأ في تحميل طلبات الخدمات</span></div>`;
-        }
-    }
-
-    loadPendingAgents();
+                refreshAll();
             } else {
                 alert('❌ ' + (data.detail || data.error || 'فشل الرفض'));
             }
@@ -691,31 +1014,7 @@
         if (e.target === modal) modal.style.display = 'none';
     };
 
-    // جلب الإحصائيات الحقيقية من الخادم
-    async function loadStats() {
-        try {
-            const res = await fetch('/api/admin/stats/', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const stats = await res.json();
-                document.getElementById('totalUsers').innerText = stats.total_users || 0;
-                document.getElementById('completedRequests').innerText = stats.completed_requests || 0;
-                document.getElementById('pendingRequests').innerText = stats.pending_requests || 0;
-                document.getElementById('newReports').innerText = stats.new_reports || 0;
-            } else {
-                console.error('فشل تحميل الإحصائيات');
-                // إظهار قيم افتراضية أو رسالة
-                document.getElementById('totalUsers').innerText = '0';
-                document.getElementById('completedRequests').innerText = '0';
-                document.getElementById('pendingRequests').innerText = '0';
-                document.getElementById('newReports').innerText = '0';
-            }
-        } catch(e) {
-            console.error(e);
-        }
-    }
-
+    // ========== طلبات الخدمات ==========
     async function loadServiceRequests() {
         const container = document.getElementById('allRequestsTable');
         try {
@@ -723,22 +1022,22 @@
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const requests = await res.json();
+            allRequestsData = await res.json();
 
-            if (!requests.length) {
+            if (!allRequestsData.length) {
                 container.innerHTML = `<div class="table-header"><span class="table-title">لا يوجد طلبات خدمات حالياً</span></div>`;
                 return;
             }
-            let html = `<div class="table-header"><span class="table-title">إجمالي الطلبات: ${requests.length}</span></div>`;
-            requests.forEach(req => {
+            let html = `<div class="table-header"><span class="table-title">إجمالي الطلبات: ${allRequestsData.length}</span></div>`;
+            allRequestsData.forEach(req => {
                 html += `
-                    <div class="table-row">
+                    <div class="table-row" onclick="window.location.href='/request-details/${req.id}/'">
                         <div style="flex:1;">
                             <h4 style="font-size:0.9rem; margin-bottom:4px;">${escapeHtml(req.title)}</h4>
                             <div style="font-size:0.75rem; color:#64748b;">الزبون: ${escapeHtml(req.customer_name)} | المهني: ${escapeHtml(req.agent_name || 'بانتظار')}</div>
                         </div>
                         <span class="status-badge ${req.status}" style="margin:0 12px; font-size:0.7rem;">${escapeHtml(req.status_display)}</span>
-                        <button class="table-btn view" onclick="window.location.href='/request-details/${req.id}/'">
+                        <button class="table-btn view" onclick="event.stopPropagation(); window.location.href='/request-details/${req.id}/'">
                             <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>`;
@@ -750,10 +1049,16 @@
         }
     }
 
-    loadPendingAgents();
-    loadAllUsers();
-    loadServiceRequests();
-    loadStats();
+    // ========== تحديث الكل ==========
+    function refreshAll() {
+        loadPendingAgents();
+        loadAllUsers();
+        loadServiceRequests();
+        loadStats();
+    }
+
+    // ========== تهيئة الصفحة ==========
+    refreshAll();
 </script>
 </body>
 </html>

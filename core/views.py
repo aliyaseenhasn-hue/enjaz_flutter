@@ -53,16 +53,16 @@ def service_requests(request):
     return render(request, 'service-requests.html')
 
 def admin_users(request):
-    return render(request, 'admin-users.html')
+    return redirect('admin-dashboard')
 
 def admin_content(request):
-    return render(request, 'admin-content.html')
+    return redirect('admin-dashboard')
 
 def admin_reports(request):
-    return render(request, 'admin-reports.html')
+    return redirect('admin-dashboard')
 
 def admin_analytics(request):
-    return render(request, 'admin-analytics.html')
+    return redirect('admin-dashboard')
 
 
 PROFESSION_TITLES = {

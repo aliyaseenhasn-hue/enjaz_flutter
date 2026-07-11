@@ -186,7 +186,25 @@ class AdminStatsView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
         if not request.user.is_superuser: return Response(status=403)
-        return Response({"users": User.objects.count()})
+        total_users = User.objects.count()
+        verified_agents = AgentProfile.objects.filter(is_verified=True).count()
+        pending_verifications = AgentProfile.objects.filter(verification_status='pending').count()
+        completed_requests = 0
+        pending_requests = 0
+        try:
+            from services.models import ServiceRequest
+            completed_requests = ServiceRequest.objects.filter(status='completed').count()
+            pending_requests = ServiceRequest.objects.filter(status='pending').count()
+        except Exception:
+            pass
+        return Response({
+            "total_users": total_users,
+            "verified_agents": verified_agents,
+            "pending_verifications": pending_verifications,
+            "completed_requests": completed_requests,
+            "pending_requests": pending_requests,
+            "new_reports": pending_verifications,
+        })
 
 class FavoriteListCreateView(APIView):
     permission_classes = [IsAuthenticated]
