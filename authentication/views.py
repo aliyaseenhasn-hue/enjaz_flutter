@@ -21,8 +21,7 @@ from django.conf import settings
 from .models import PortfolioImage, AgentProfile, Favorite
 from .serializers import (
     RegisterSerializer, TokenResponseSerializer,
-    PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
-    AgentDirectorySerializer, FavoriteSerializer, UserSerializer,
+    FavoriteSerializer, UserSerializer,
     AgentProfileSerializer, PortfolioItemSerializer
 )
 

@@ -110,3 +110,9 @@ class ProfessionalDetailSerializer(ProfessionalSerializer):
     portfolio_images = PortfolioItemSerializer(many=True, read_only=True)
     class Meta(ProfessionalSerializer.Meta):
         fields = ProfessionalSerializer.Meta.fields + ['portfolio_images']
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    agent = AgentProfileSerializer()
+    class Meta:
+        model = Favorite
+        fields = ['id', 'agent', 'created_at']
