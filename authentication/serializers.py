@@ -133,18 +133,34 @@ class UserSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     password_confirm = serializers.CharField(write_only=True)
+    profession = serializers.CharField(write_only=True, required=False)
+    custom_profession = serializers.CharField(write_only=True, required=False)
+
     class Meta:
         model = User
-        fields = ['phone_number', 'first_name', 'last_name', 'role', 'password', 'password_confirm']
+        fields = ['phone_number', 'first_name', 'last_name', 'role', 'password', 'password_confirm', 'profession', 'custom_profession']
+
     def validate(self, data):
-        if data['password'] != data['password_confirm']: raise serializers.ValidationError("كلمة المرور غير متطابقة")
+        if data['password'] != data['password_confirm']:
+            raise serializers.ValidationError("كلمة المرور غير متطابقة")
         return data
+
     def create(self, validated_data):
         validated_data.pop('password_confirm')
+        profession = validated_data.pop('profession', None)
+        custom_profession = validated_data.pop('custom_profession', None)
         password = validated_data.pop('password')
+        
         user = User.objects.create_user(**validated_data)
         user.set_password(password)
         user.save()
+        
+        if user.role == 'agent' or profession:
+            AgentProfile.objects.create(
+                user=user, 
+                profession=profession or 'other',
+                custom_profession=custom_profession
+            )
         return user
 
 class TokenResponseSerializer(serializers.Serializer):
@@ -189,9 +205,10 @@ class PortfolioItemSerializer(serializers.ModelSerializer):
 class ProfessionalSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     title = serializers.CharField(source='get_profession_display', read_only=True)
+    profession_display = serializers.CharField(source='get_profession_display', read_only=True)
     class Meta:
         model = AgentProfile
-        fields = ['id', 'user', 'title', 'city', 'rating', 'total_jobs']
+        fields = ['id', 'user', 'title', 'profession_display', 'city', 'rating', 'total_jobs']
 
 class ProfessionalDetailSerializer(ProfessionalSerializer):
     portfolio_images = PortfolioItemSerializer(many=True, read_only=True)
