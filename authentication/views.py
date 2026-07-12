@@ -279,6 +279,36 @@ class ProfessionalListView(APIView):
         ).exclude(
             profession='other', custom_profession__isnull=True
         )
+
+        # منطق البحث عن القريبين إذا تم إرسال lat و lng
+        lat = request.query_params.get('lat')
+        lng = request.query_params.get('lng')
+        radius = request.query_params.get('radius', 50) # النطاق الافتراضي 50 كم
+        category = request.query_params.get('category')
+
+        if category:
+            agents = agents.filter(Q(profession=category) | Q(custom_profession__icontains=category))
+
+        if lat and lng:
+            try:
+                user_lat = float(lat)
+                user_lng = float(lng)
+                radius_km = float(radius)
+                
+                # فلترة المربع (Bounding Box) لتسريع الأداء
+                # 1 درجة عرض ≈ 111 كم
+                lat_deg = radius_km / 111.0
+                lng_deg = radius_km / (111.0 * 0.8) 
+
+                agents = agents.filter(
+                    lat__gte=user_lat - lat_deg,
+                    lat__lte=user_lat + lat_deg,
+                    lon__gte=user_lng - lng_deg,
+                    lon__lte=user_lng + lng_deg
+                )
+            except (TypeError, ValueError):
+                pass
+
         return Response(AgentProfileSerializer(agents, many=True, context={'request': request}).data)
 
 class ProfessionalDetailView(APIView):
