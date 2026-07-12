@@ -181,6 +181,8 @@ class UploadIdentityView(APIView):
             # استخراج البيانات المرسلة
             full_name = request.data.get('full_name', '')
             whatsapp_number = request.data.get('whatsapp_number', '')
+            profession = request.data.get('profession', 'other')
+            custom_profession = request.data.get('custom_profession', '')
             id_card_front = request.FILES.get('id_card_front')
             id_card_back = request.FILES.get('id_card_back')
             
@@ -196,6 +198,10 @@ class UploadIdentityView(APIView):
                 profile.full_name_at_verification = full_name
             if whatsapp_number:
                 profile.whatsapp_number = whatsapp_number
+            if profession:
+                profile.profession = profession
+            if custom_profession:
+                profile.custom_profession = custom_profession
             
             # حفظ الصور
             profile.id_card_front = id_card_front
