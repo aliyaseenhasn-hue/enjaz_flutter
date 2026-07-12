@@ -267,7 +267,12 @@ class FavoriteDeleteView(APIView):
 class ProfessionalListView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
-        agents = AgentProfile.objects.filter(is_verified=True)
+        # تصفية المهنيين الحقيقيين فقط (الموثقين والذين لديهم بيانات كاملة)
+        agents = AgentProfile.objects.filter(is_verified=True).exclude(
+            profession='other', custom_profession=''
+        ).exclude(
+            profession='other', custom_profession__isnull=True
+        )
         return Response(AgentProfileSerializer(agents, many=True, context={'request': request}).data)
 
 class ProfessionalDetailView(APIView):
@@ -288,7 +293,12 @@ class CategoryAPIListView(APIView):
 class FeaturedAgentsView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
-        agents = AgentProfile.objects.filter(is_verified=True)[:10]
+        # تصفية المهنيين الحقيقيين فقط
+        agents = AgentProfile.objects.filter(is_verified=True).exclude(
+            profession='other', custom_profession=''
+        ).exclude(
+            profession='other', custom_profession__isnull=True
+        )[:10]
         return Response(AgentProfileSerializer(agents, many=True, context={'request': request}).data)
 
 def add_portfolio_image(request):
