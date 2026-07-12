@@ -20,15 +20,18 @@ class AgentProfileSerializer(serializers.ModelSerializer):
     id_card_back = serializers.SerializerMethodField()
     profession_display = serializers.SerializerMethodField()
     portfolio_images = serializers.SerializerMethodField()
+    full_name = serializers.ReadOnlyField(source='user.full_name')
+    phone_number = serializers.ReadOnlyField(source='user.phone_number')
+    user_id = serializers.ReadOnlyField(source='user.id')
 
     class Meta:
         model = AgentProfile
         fields = [
-            'id', 'bio', 'is_verified', 'verification_status', 
-            'balance', 'rating', 'total_jobs', 'id_card_front', 
-            'id_card_back', 'profession', 'custom_profession', 'city',
-            'whatsapp_number', 'full_name_at_verification', 'profession_display',
-            'portfolio_images'
+            'id', 'user_id', 'full_name', 'phone_number', 'bio', 
+            'is_verified', 'verification_status', 'balance', 'rating', 
+            'total_jobs', 'id_card_front', 'id_card_back', 'profession', 
+            'custom_profession', 'city', 'whatsapp_number', 
+            'full_name_at_verification', 'profession_display', 'portfolio_images'
         ]
 
     def get_profession_display(self, obj):
