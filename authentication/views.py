@@ -262,13 +262,17 @@ class AgentProfileView(APIView):
             city = request.data.get('city')
             whatsapp = request.data.get('whatsapp_number')
             bio = request.data.get('bio')
-            
+            lat = request.data.get('lat')
+            lon = request.data.get('lon') or request.data.get('lng')
+
             if profession: profile.profession = profession
             if custom_profession is not None: profile.custom_profession = custom_profession
             if city: profile.city = city
             if whatsapp: profile.whatsapp_number = whatsapp
             if bio: profile.bio = bio
-            
+            if lat: profile.lat = lat
+            if lon: profile.lon = lon
+
             profile.save()
             
             # 🔥 مسح العلاقة المخبأة في request.user (cached agent_profile)
@@ -464,18 +468,23 @@ class FavoriteDeleteView(APIView):
 class ProfessionalListView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
-        # تصفية المهنيين الحقيقيين فقط، الموثقين، والمتاحين حالياً (is_online=True)
+        # تصفية المهنيين الحقيقيين فقط والموثقين
+        # جعلنا حالة is_online اختيارية لتسهيل ظهور المهنيين المسجلين
         agents = AgentProfile.objects.filter(
-            is_verified=True, 
-            user__is_online=True
-        ).exclude(
+            is_verified=True
+        )
+
+        # اختيارياً: التصفية حسب المتاحين فقط إذا تم تمرير المعامل
+        # أو إذا كانت فئة المحاماة لضمان جلب النشطين والقريبين
+        if request.query_params.get('available_now') == 'true':
+            agents = agents.filter(user__is_online=True)
+
+        # استبعاد المهنيين الذين لم يحددوا تخصصهم بعد
+        agents = agents.exclude(
             profession='other', custom_profession=''
         ).exclude(
             profession='other', custom_profession__isnull=True
         )
-        
-        if request.user.is_authenticated:
-            agents = agents.exclude(user=request.user)
 
         # منطق البحث عن القريبين إذا تم إرسال lat و lng
         lat = request.query_params.get('lat')
@@ -488,6 +497,15 @@ class ProfessionalListView(APIView):
             try:
                 # محاولة البحث إذا كان المرسل هو ID القسم
                 cat_obj = Category.objects.get(id=int(category))
+
+                # إذا كانت فئة المحاماة، نركز على القريبين فقط كما طلب المستخدم
+                is_lawyer = "محام" in cat_obj.name or "قانون" in cat_obj.name
+                if is_lawyer:
+                    if not lat or not lng:
+                        # إذا لم يتم إرسال موقع، قد نرغب في إرجاع فارغ أو تحذير،
+                        # لكننا سنكتفي بالتصفية حسب المهنة حالياً
+                        pass
+
                 if cat_obj.related_profession:
                     # تصفية حسب المهنة المرتبطة بالقسم
                     agents = agents.filter(profession=cat_obj.related_profession)

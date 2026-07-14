@@ -121,14 +121,32 @@ class ServiceRequestCreateView(APIView):
                         body=f"لقد أنشأت طلباً جديداً: {req.title}",
                         request=req
                     )
+
                     if agent:
+                        # طلب مباشر لمهني محدد
                         Notification.objects.create(
                             user=agent,
                             title="طلب خدمة جديد",
-                            body=f"لديك طلب خدمة جديد من {request.user.full_name}",
+                            body=f"لديك طلب خدمة جديد مباشر من {request.user.full_name}",
                             request=req
                         )
-                except: pass
+                    elif category.related_profession:
+                        # طلب عام لكل المهنيين في هذا التخصص
+                        target_profession = category.related_profession
+                        related_agents = AgentProfile.objects.filter(
+                            profession=target_profession,
+                            is_verified=True
+                        ).exclude(user=request.user).select_related('user')
+
+                        for profile in related_agents:
+                            Notification.objects.create(
+                                user=profile.user,
+                                title=f"طلب جديد في قسم {category.name}",
+                                body=f"هناك طلب خدمة جديد متاح: {req.title}",
+                                request=req
+                            )
+                except Exception as e:
+                    logger.error(f"Error sending notifications: {e}")
 
                 # إرجاع البيانات بالشكل الذي يتوقعه Flutter (داخل حقل data)
                 serializer = ServiceRequestDetailSerializer(req)
@@ -227,15 +245,18 @@ class NearbyAgentsView(APIView):
             except (ValueError, TypeError):
                 max_distance = 50.0
 
-            # جلب المهنيين الحقيقيين فقط (موثقين ومعتمدين ومتاحين حالياً)
+            # جلب المهنيين الحقيقيين فقط (موثقين ومعتمدين)
             # استبعاد المستخدم الحالي إذا كان مهنياً عند البحث عن القريبين
             queryset = AgentProfile.objects.filter(
                 is_verified=True,
                 verification_status='approved',
-                user__is_online=True,
                 lat__isnull=False,
                 lon__isnull=False,
             ).exclude(user=request.user).select_related('user').prefetch_related('portfolio_images')
+
+            # فلترة المتاحين فقط إذا طلب ذلك
+            if request.query_params.get('available_now') == 'true':
+                queryset = queryset.filter(user__is_online=True)
 
             if profession:
                 queryset = queryset.filter(profession=profession)
@@ -359,11 +380,55 @@ class NearbyAgentsByCategoryView(APIView):
             return Response({'agents': [], 'total': 0, 'error': str(e)}, status=500)
 
 class ChatConversationsView(APIView):
-    def get(self, request): return Response([])
+    permission_classes = [permissions.IsAuthenticated]
+    def get(self, request):
+        user = request.user
+        # جلب الطلبات التي يكون المستخدم طرفاً فيها ولديها مهني محدد (لبدء المحادثة)
+        requests = ServiceRequest.objects.filter(
+            Q(customer=user) | Q(agent=user)
+        ).filter(agent__isnull=False).order_by('-updated_at')
+
+        return Response(ServiceRequestListSerializer(requests, many=True).data)
 
 class RequestMessagesView(APIView):
-    def get(self, request, pk): return Response([])
-    def post(self, request, pk): return Response({"message": "ok"})
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        req = get_object_or_404(ServiceRequest, pk=pk)
+        if request.user != req.customer and request.user != req.agent:
+            return Response({"detail": "غير مصرح لك"}, status=403)
+
+        messages = req.messages.all().order_by('created_at')
+        return Response(RequestMessageSerializer(messages, many=True).data)
+
+    def post(self, request, pk):
+        req = get_object_or_404(ServiceRequest, pk=pk)
+        if request.user != req.customer and request.user != req.agent:
+            return Response({"detail": "غير مصرح لك"}, status=403)
+
+        content = request.data.get('content')
+        if not content:
+            return Response({"content": "الرسالة فارغة"}, status=400)
+
+        msg = RequestMessage.objects.create(
+            request=req,
+            sender=request.user,
+            content=content
+        )
+
+        # إشعار للطرف الآخر
+        other_user = req.agent if request.user == req.customer else req.customer
+        if other_user:
+            try:
+                Notification.objects.create(
+                    user=other_user,
+                    title=f"رسالة جديدة من {request.user.full_name}",
+                    body=content[:50] + "..." if len(content) > 50 else content,
+                    request=req
+                )
+            except: pass
+
+        return Response(RequestMessageSerializer(msg).data, status=201)
 
 class WalletInfoView(APIView):
     def get(self, request): return Response({'balance': 0})

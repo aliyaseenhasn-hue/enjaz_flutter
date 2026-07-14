@@ -76,9 +76,9 @@ PROFESSION_TITLES = {
     'tile_mason':       'السيراميك والمرمر',
     'developer':        'برمجة وتقنية معلومات',
     'engineer':         'استشارات هندسية',
-    'lawyer':           'خدمات قانونية',
+    'lawyer':           'محاماة واستشارات قانونية',
     'security_tech':    'الأنظمة الأمنية والكاميرات',
-    'clearance_agent':  'معقب معاملات',
+    'clearance_agent':  'معقب معاملات وقضايا',
     'accountant':       'محاسب',
 }
 

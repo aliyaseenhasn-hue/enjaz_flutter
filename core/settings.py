@@ -220,5 +220,8 @@ if os.path.exists(FIREBASE_KEY_PATH):
     try:
         firebase_admin.get_app()
     except ValueError:
-        cred = credentials.Certificate(FIREBASE_KEY_PATH)
-        firebase_admin.initialize_app(cred)
+        try:
+            cred = credentials.Certificate(FIREBASE_KEY_PATH)
+            firebase_admin.initialize_app(cred)
+        except Exception as e:
+            print(f"Failed to initialize Firebase: {e}")

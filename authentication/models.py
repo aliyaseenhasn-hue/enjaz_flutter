@@ -112,7 +112,7 @@ class AgentProfile(models.Model):
         ('rejected', 'مرفوض'),
     )
     PROFESSION_CHOICES = (
-        ('lawyer', 'محامٍ'),
+        ('lawyer', 'محاماة واستشارات قانونية'),
         ('electrician', 'كهربائي'),
         ('plumber', 'سباك'),
         ('mason', 'بناء'),
@@ -123,7 +123,7 @@ class AgentProfile(models.Model):
         ('developer', 'مبرمج'),
         ('engineer', 'مهندس'),
         ('security_tech', 'فني أنظمة أمنية'),
-        ('clearance_agent', 'معقب معاملات'),
+        ('clearance_agent', 'معقب معاملات وقضايا'),
         ('accountant', 'محاسب'),
         ('other', 'خدمات أخرى'),
     )
