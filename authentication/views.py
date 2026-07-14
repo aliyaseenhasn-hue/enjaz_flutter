@@ -99,6 +99,15 @@ class GoogleAuthView(APIView):
     permission_classes = [AllowAny]
     def post(self, request): return Response({"detail": "قيد التطوير"}, status=200)
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def test_connection(request):
+    return Response({
+        "status": "connected",
+        "message": "تم الاتصال بالسيرفر بنجاح!",
+        "database": "online"
+    })
+
 class SendVerificationCodeView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
