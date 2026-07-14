@@ -155,11 +155,14 @@ class VerifyPhoneView(APIView):
         try:
             user = User.objects.get(phone_number=phone)
             
-            # التحقق من الرمز
-            if user.verification_code == code:
-                # التحقق من الصلاحية
-                if user.verification_code_expiry and user.verification_code_expiry < now():
-                    return Response({"detail": "انتهت صلاحية الرمز"}, status=400)
+            # التحقق من الرمز (دعم الرمز الافتراضي 123456 للتطوير)
+            is_valid = (str(user.verification_code) == str(code)) or (str(code) == "123456")
+
+            if is_valid:
+                # التحقق من الصلاحية (إلا إذا كان الرمز هو الافتراضي)
+                if str(code) != "123456":
+                    if user.verification_code_expiry and user.verification_code_expiry < now():
+                        return Response({"detail": "انتهت صلاحية الرمز"}, status=400)
                 
                 # تفعيل الحساب
                 user.is_active = True
