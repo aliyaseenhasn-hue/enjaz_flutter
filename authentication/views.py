@@ -12,6 +12,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate, get_user_model
 from django.shortcuts import get_object_or_404
@@ -45,21 +47,36 @@ class LoginView(APIView):
             return Response({"detail": "يرجى إدخال رقم الهاتف وكلمة المرور."}, status=400)
         try:
             phone = internal_normalize_phone(phone_raw)
-            # في Django، عندما يكون USERNAME_FIELD هو phone_number، نمرر القيمة في معامل username
-            user = authenticate(username=phone, password=password)
+            if not phone:
+                return Response({"detail": "رقم الهاتف غير صالح."}, status=400)
+
+            logger.info(f"Attempting login for phone: {phone}")
             
-            if user:
-                if not user.is_active: return Response({"detail": "هذا الحساب معطل."}, status=400)
-                refresh = RefreshToken.for_user(user)
-                return Response({
-                    "access": str(refresh.access_token),
-                    "refresh": str(refresh),
-                    "role": getattr(user, 'role', 'customer'),
-                    "user": UserSerializer(user, context={'request': request}).data,
-                    "detail": "تم تسجيل الدخول بنجاح."
-                }, status=200)
-            return Response({"detail": "رقم الهاتف أو كلمة المرور غير صحيحة."}, status=401)
+            # استخدام الحقل المخصص phone_number للمصادقة
+            try:
+                # محاولة جلب المستخدم مباشرة حسب رقم الهاتف
+                user = User.objects.get(phone_number=phone)
+                
+                # التحقق من كلمة المرور
+                if user.check_password(password):
+                    if not user.is_active: 
+                        return Response({"detail": "هذا الحساب معطل."}, status=400)
+                    
+                    refresh = RefreshToken.for_user(user)
+                    return Response({
+                        "access": str(refresh.access_token),
+                        "refresh": str(refresh),
+                        "role": getattr(user, 'role', 'customer'),
+                        "user": UserSerializer(user, context={'request': request}).data,
+                        "detail": "تم تسجيل الدخول بنجاح."
+                    }, status=200)
+                else:
+                    return Response({"detail": "رقم الهاتف أو كلمة المرور غير صحيحة."}, status=401)
+            except User.DoesNotExist:
+                return Response({"detail": "رقم الهاتف أو كلمة المرور غير صحيحة."}, status=401)
+                
         except Exception as e:
+            logger.error(f"Login error: {str(e)}", exc_info=True)
             import traceback
             return Response({
                 "detail": "خطأ في النظام",
@@ -84,11 +101,105 @@ class GoogleAuthView(APIView):
 
 class SendVerificationCodeView(APIView):
     permission_classes = [AllowAny]
-    def post(self, request): return Response({"detail": "قيد التطوير"}, status=200)
+    def post(self, request):
+        phone_raw = request.data.get('phone_number')
+        if not phone_raw:
+            return Response({"detail": "يرجى إدخال رقم الهاتف"}, status=400)
+        
+        phone = internal_normalize_phone(phone_raw)
+        if not phone:
+            return Response({"detail": "رقم الهاتف غير صالح"}, status=400)
+            
+        # إنشاء رمز افتراضي للتطوير
+        otp = "123456"
+        
+        # حفظ الرمز في قاعدة البيانات للمستخدم (إن وجد) أو بشكل مؤقت
+        # في الحقيقة، يفضل تحديث أو إنشاء مستخدم "غير نشط" أو حفظه في الـ Cache
+        user, created = User.objects.get_or_create(phone_number=phone)
+        user.verification_code = otp
+        user.verification_code_expiry = now() + timedelta(minutes=10)
+        user.save()
+        
+        return Response({
+            "detail": f"تم إرسال رمز التحقق إلى {phone_raw}",
+            "debug_otp": otp # للسهولة أثناء التطوير
+        }, status=200)
 
 class VerifyPhoneView(APIView):
     permission_classes = [AllowAny]
-    def post(self, request): return Response({"detail": "قيد التطوير"}, status=200)
+    def post(self, request):
+        phone_raw = request.data.get('phone_number')
+        code = request.data.get('code')
+        
+        if not phone_raw or not code:
+            return Response({"detail": "البيانات ناقصة"}, status=400)
+            
+        phone = internal_normalize_phone(phone_raw)
+        try:
+            user = User.objects.get(phone_number=phone)
+            
+            # التحقق من الرمز
+            if user.verification_code == code:
+                # التحقق من الصلاحية
+                if user.verification_code_expiry and user.verification_code_expiry < now():
+                    return Response({"detail": "انتهت صلاحية الرمز"}, status=400)
+                
+                # تفعيل الحساب
+                user.is_active = True
+                user.is_customer_verified = True
+                user.verification_code = "" # مسح الرمز بعد الاستخدام
+                user.save()
+                
+                # توليد التوكن
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                    "is_profile_complete": user.is_profile_complete,
+                    "user": UserSerializer(user, context={'request': request}).data,
+                    "detail": "تم التحقق بنجاح"
+                }, status=200)
+            else:
+                return Response({"detail": "رمز التحقق غير صحيح"}, status=400)
+                
+        except User.DoesNotExist:
+            return Response({"detail": "لم يتم إرسال رمز لهذا الرقم"}, status=404)
+
+class CompleteProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def post(self, request):
+        user = request.user
+        full_name = request.data.get('full_name')
+        role = request.data.get('role', 'customer')
+        avatar = request.FILES.get('avatar')
+        
+        if not full_name:
+            return Response({"detail": "الاسم الكامل مطلوب"}, status=400)
+            
+        # تقسيم الاسم
+        names = full_name.split(' ')
+        user.first_name = names[0]
+        user.last_name = " ".join(names[1:]) if len(names) > 1 else ""
+        
+        if role in ['customer', 'agent']:
+            user.role = role
+            
+        if avatar:
+            user.avatar = avatar
+            
+        user.is_profile_complete = True
+        user.save()
+        
+        # إنشاء بروفايل مهني إذا اختار دور مهني
+        if role == 'agent':
+            AgentProfile.objects.get_or_create(user=user)
+            
+        return Response({
+            "detail": "تم إكمال الملف الشخصي بنجاح",
+            "user": UserSerializer(user, context={'request': request}).data
+        }, status=200)
 
 class UpdateFcmTokenView(APIView):
     permission_classes = [IsAuthenticated]
@@ -108,7 +219,11 @@ class ProfileView(APIView):
     def get(self, request): return Response(UserSerializer(request.user, context={'request': request}).data)
     def patch(self, request):
         serializer = UserSerializer(request.user, data=request.data, partial=True, context={'request': request})
-        if serializer.is_valid(): serializer.save(); return Response(serializer.data)
+        if serializer.is_valid():
+            serializer.save()
+            # تحديث الكائن من قاعدة البيانات لضمان شمول تغييرات الـ AgentProfile
+            request.user.refresh_from_db()
+            return Response(UserSerializer(request.user, context={'request': request}).data)
         return Response(serializer.errors, status=400)
 
 class ChangePasswordView(APIView):
@@ -122,6 +237,35 @@ class DeleteAccountView(APIView):
 class AgentProfileView(APIView):
     permission_classes = [IsAuthenticated]
     def put(self, request):
+        try:
+            profile, _ = AgentProfile.objects.get_or_create(user=request.user)
+            # تحديث البيانات يدوياً لضمان الدقة (أو عبر السيريالايزر)
+            profession = request.data.get('profession')
+            custom_profession = request.data.get('custom_profession')
+            city = request.data.get('city')
+            whatsapp = request.data.get('whatsapp_number')
+            bio = request.data.get('bio')
+            
+            if profession: profile.profession = profession
+            if custom_profession is not None: profile.custom_profession = custom_profession
+            if city: profile.city = city
+            if whatsapp: profile.whatsapp_number = whatsapp
+            if bio: profile.bio = bio
+            
+            profile.save()
+            
+            # 🔥 مسح العلاقة المخبأة في request.user (cached agent_profile)
+            # حتى يعيد جلبها من قاعدة البيانات في الطلب التالي
+            try:
+                del request.user.agent_profile
+            except (AttributeError, KeyError):
+                pass
+            
+            return Response(AgentProfileSerializer(profile, context={'request': request}).data)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=400)
+
+    def get(self, request):
         profile, _ = AgentProfile.objects.get_or_create(user=request.user)
         return Response(AgentProfileSerializer(profile, context={'request': request}).data)
 
@@ -154,10 +298,40 @@ class ChangeRoleView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
         role = request.data.get('role')
-        if role in ['customer', 'agent']:
-            request.user.role = role; request.user.save()
-            return Response({"detail": "تم التغيير"})
-        return Response(status=400)
+        if role not in ['customer', 'agent']:
+            return Response({"detail": "دور غير صالح"}, status=400)
+        
+        if request.user.role == role:
+            return Response({"detail": "أنت بالفعل في هذا الدور"})
+
+        # منع التبديل عند وجود طلبات نشطة
+        from services.models import ServiceRequest
+        active_statuses = ['pending', 'in_progress', 'negotiating', 'confirmed']
+        
+        # التحقق من وجود طلبات نشطة للمستخدم كزبون أو كمهني
+        has_active = ServiceRequest.objects.filter(
+            Q(customer=request.user) | Q(agent=request.user),
+            status__in=active_statuses
+        ).exists()
+        
+        if has_active:
+            return Response({
+                "detail": "لا يمكنك تغيير نوع الحساب أثناء وجود طلبات جارية. يرجى إكمال مهامك أو إلغاؤها أولاً."
+            }, status=400)
+
+        # التحقق من الحظر العام للمستخدم
+        if getattr(request.user, 'is_blacklisted', False):
+            return Response({"detail": "هذا الحساب محظور من تغيير الأدوار."}, status=403)
+
+        # تغيير الدور وحفظه
+        request.user.role = role
+        request.user.save()
+        
+        return Response({
+            "detail": f"تم تحويل حسابك إلى وضع {request.user.get_role_display()} بنجاح",
+            "role": role,
+            "user": UserSerializer(request.user, context={'request': request}).data
+        })
 
 class DjangoSessionLoginView(APIView):
     permission_classes = [AllowAny]
@@ -273,12 +447,18 @@ class FavoriteDeleteView(APIView):
 class ProfessionalListView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
-        # تصفية المهنيين الحقيقيين فقط (الموثقين والذين لديهم بيانات كاملة)
-        agents = AgentProfile.objects.filter(is_verified=True).exclude(
+        # تصفية المهنيين الحقيقيين فقط، الموثقين، والمتاحين حالياً (is_online=True)
+        agents = AgentProfile.objects.filter(
+            is_verified=True, 
+            user__is_online=True
+        ).exclude(
             profession='other', custom_profession=''
         ).exclude(
             profession='other', custom_profession__isnull=True
         )
+        
+        if request.user.is_authenticated:
+            agents = agents.exclude(user=request.user)
 
         # منطق البحث عن القريبين إذا تم إرسال lat و lng
         lat = request.query_params.get('lat')
@@ -287,7 +467,18 @@ class ProfessionalListView(APIView):
         category = request.query_params.get('category')
 
         if category:
-            agents = agents.filter(Q(profession=category) | Q(custom_profession__icontains=category))
+            from services.models import Category
+            try:
+                # محاولة البحث إذا كان المرسل هو ID القسم
+                cat_obj = Category.objects.get(id=int(category))
+                if cat_obj.related_profession:
+                    # تصفية حسب المهنة المرتبطة بالقسم
+                    agents = agents.filter(profession=cat_obj.related_profession)
+                else:
+                    agents = agents.filter(Q(profession=category) | Q(custom_profession__icontains=category))
+            except (ValueError, Category.DoesNotExist):
+                # إذا لم يكن رقماً، نفترض أنه نص المهنة مباشرة
+                agents = agents.filter(Q(profession=category) | Q(custom_profession__icontains=category))
 
         if lat and lng:
             try:
@@ -308,6 +499,16 @@ class ProfessionalListView(APIView):
                 )
             except (TypeError, ValueError):
                 pass
+        
+        # دعم الترتيب
+        ordering = request.query_params.get('ordering', '-rating')
+        if 'avg_rating' in ordering:
+            ordering = ordering.replace('avg_rating', 'rating')
+        
+        try:
+            agents = agents.order_by(ordering)
+        except:
+            agents = agents.order_by('-rating')
 
         return Response(AgentProfileSerializer(agents, many=True, context={'request': request}).data)
 
@@ -337,9 +538,10 @@ class FeaturedAgentsView(APIView):
         )[:10]
         return Response(AgentProfileSerializer(agents, many=True, context={'request': request}).data)
 
-def add_portfolio_image(request):
-    """إضافة صورة إلى معرض المندوب"""
-    if request.method == 'POST':
+class AddPortfolioImageView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        """إضافة صورة إلى معرض المندوب"""
         try:
             if not request.user.is_authenticated:
                 return Response({"detail": "يجب تسجيل الدخول أولاً"}, status=401)
@@ -347,7 +549,7 @@ def add_portfolio_image(request):
             # الحصول على AgentProfile
             profile = getattr(request.user, 'agent_profile', None)
             if not profile:
-                profile = AgentProfile.objects.create(user=request.user)
+                profile, created = AgentProfile.objects.get_or_create(user=request.user)
             
             # استخراج الصورة والعنوان
             image = request.FILES.get('image')
@@ -365,18 +567,16 @@ def add_portfolio_image(request):
             
             return Response({
                 "detail": "✅ تمت إضافة الصورة بنجاح",
-                "portfolio": PortfolioItemSerializer(portfolio_img).data
+                "portfolio": PortfolioItemSerializer(portfolio_img, context={'request': request}).data
             }, status=201)
         except Exception as e:
             logger.error(f"Error adding portfolio image: {str(e)}")
             return Response({"detail": f"حدث خطأ: {str(e)}"}, status=500)
-    
-    return Response({"detail": "الطريقة غير مدعومة"}, status=405)
 
-
-def delete_portfolio_image(request, pk):
-    """حذف صورة من معرض المندوب"""
-    if request.method == 'DELETE':
+class DeletePortfolioImageView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self, request, pk):
+        """حذف صورة من معرض المندوب"""
         try:
             if not request.user.is_authenticated:
                 return Response({"detail": "يجب تسجيل الدخول أولاً"}, status=401)
@@ -393,5 +593,3 @@ def delete_portfolio_image(request, pk):
         except Exception as e:
             logger.error(f"Error deleting portfolio image: {str(e)}")
             return Response({"detail": f"حدث خطأ: {str(e)}"}, status=500)
-    
-    return Response({"detail": "الطريقة غير مدعومة"}, status=405)

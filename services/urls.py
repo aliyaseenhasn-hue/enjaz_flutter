@@ -28,8 +28,10 @@ urlpatterns = [
     # ── المحادثات ─────────────────────────────────────────────────
     path('chat/conversations/', views.ChatConversationsView.as_view(), name='chat-conversations'),
 
-    # ── المهنيون حسب القرب ─────────────────────────────────────────
+    # ── المهنيون (حقيقيون + قريبون) ─────────────────────────────────
     path('agents/nearby/', views.NearbyAgentsView.as_view(), name='nearby-agents'),
+    path('agents/nearby/category/<int:category_id>/', views.NearbyAgentsByCategoryView.as_view(), name='nearby-agents-category'),
+    path('agents/<int:pk>/', views.AgentDetailView.as_view(), name='agent-detail'),
 
     # ── المحفظة ───────────────────────────────────────────────────
     path('wallet/',              views.WalletInfoView.as_view(),         name='wallet-info'),

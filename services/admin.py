@@ -21,5 +21,5 @@ class ServiceRequestAdmin(admin.ModelAdmin):
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ('request', 'rating', 'customer', 'agent', 'created_at')
-    list_filter = ('rating',)
+    list_display = ('request', 'rating', 'reviewer', 'reviewee', 'review_type', 'created_at')
+    list_filter = ('rating', 'review_type')

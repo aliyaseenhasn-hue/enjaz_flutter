@@ -23,7 +23,7 @@ class User(AbstractUser):
     objects = UserManager()
     ROLE_CHOICES = (
         ('customer', 'زبون'),
-        ('agent', 'مندوب'),
+        ('agent', 'مهني'), # تم تغيير المسمى من مندوب لمهني للوضوح
         ('admin', 'مدير النظام'),
     )
 
@@ -38,8 +38,20 @@ class User(AbstractUser):
     )
     role = models.CharField(
         max_length=15, choices=ROLE_CHOICES, default='customer',
-        verbose_name="نوع الحساب"
+        verbose_name="الدور النشط الحالي"
     )
+    
+    # ─── توثيق الزبون (عادة عبر OTP) ───────────────────────────────────
+    is_customer_verified = models.BooleanField(default=False, verbose_name="زبون موثق")
+    
+    # ─── إحصائيات الزبون (منفصلة عن المهني) ──────────────────────────────
+    customer_rating = models.FloatField(default=0.0, verbose_name="تقييم الزبون")
+    customer_total_reviews = models.IntegerField(default=0, verbose_name="إجمالي تقييمات الزبون")
+    
+    # ─── الحماية من سوء الاستخدام ─────────────────────────────────────
+    is_blacklisted = models.BooleanField(default=False, verbose_name="محظور من النظام")
+    blacklisted_reason = models.TextField(blank=True, verbose_name="سبب الحظر")
+
     avatar = models.ImageField(
         upload_to='avatars/', null=True, blank=True,
         verbose_name="الصورة الشخصية"
@@ -50,8 +62,8 @@ class User(AbstractUser):
     # ─── البريد الإلكتروني (اختياري، فريد) ────────────────────────────────
     email = models.EmailField(unique=True, null=True, blank=True, verbose_name="البريد الإلكتروني")
 
-    # ─── حقل يشير إلى أن المستخدم بحاجة لإكمال رقم هاتفه (مثل حسابات Google) ──
-    needs_phone_completion = models.BooleanField(default=False, verbose_name="بحاجة لتكملة رقم الهاتف")
+    # ─── حقل يشير إلى أن المستخدم أكمل بياناته الأساسية ───────────────────
+    is_profile_complete = models.BooleanField(default=False, verbose_name="الملف الشخصي مكتمل")
 
     # ─── حقول مؤقتة لتوثيق رقم الهاتف عبر رمز التحقق ──────────────────────
     temp_phone = models.CharField(max_length=15, null=True, blank=True, verbose_name="رقم مؤقت للتحقق")

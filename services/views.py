@@ -1,9 +1,12 @@
 """
-services/views.py - Minimal Stable Version
+services/views.py - محسّن مع دعم المهنيين القريبين والموثّقين
 """
 import logging
+import math
+from functools import lru_cache
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Count
+from django.core.cache import cache
 from rest_framework import generics, permissions, status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
@@ -18,12 +21,29 @@ from .serializers import (
     CategorySerializer, RequestMessageSerializer,
     ReviewSerializer, ServiceRequestDetailSerializer,
     ServiceRequestListSerializer, WalletTransactionSerializer,
+    AgentProfileListSerializer, AgentProfileDetailSerializer,
 )
 
 from authentication.models import AgentProfile, User
 from notifications.models import Notification
 
 logger = logging.getLogger(__name__)
+
+
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """
+    تحسب المسافة بالكيلومتر بين نقطتين باستخدام صيغة هافرسين
+    """
+    R = 6371  # نصف قطر الأرض بالكيلومتر
+    try:
+        lat1, lon1, lat2, lon2 = map(float, [lat1, lon1, lat2, lon2])
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+        c = 2 * math.asin(math.sqrt(a))
+        return round(R * c, 1)
+    except (ValueError, TypeError):
+        return None
 
 class ServiceRequestCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -143,7 +163,8 @@ class MyRequestsView(generics.ListAPIView):
 class AvailableRequestsForAgentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        qs = ServiceRequest.objects.filter(status='pending', agent__isnull=True)
+        # استبعاد الطلبات التي أنشأها المستخدم نفسه كزبون
+        qs = ServiceRequest.objects.filter(status='pending', agent__isnull=True).exclude(customer=request.user)
         return Response(ServiceRequestListSerializer(qs, many=True).data)
 
 class AcceptRequestView(APIView):
@@ -176,7 +197,166 @@ class RejectRequestView(APIView):
     def post(self, request, pk): return Response({"message": "ok"})
 
 class NearbyAgentsView(APIView):
-    def get(self, request): return Response({"agents": []})
+    """
+    إرجاع المهنيين الحقيقيين (Verified) مع حساب المسافة بناءً على موقع المستخدم.
+    يمكن تمرير ?lat=xxx&lon=xxx&profession=xxx&max_distance=50
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        try:
+            user_lat = request.query_params.get('lat')
+            user_lon = request.query_params.get('lon')
+            profession = request.query_params.get('profession')
+            max_distance = request.query_params.get('max_distance', 50)
+
+            try:
+                max_distance = float(max_distance)
+            except (ValueError, TypeError):
+                max_distance = 50.0
+
+            # ── استخدام Cache للاستعلامات المتكررة (بدون موقع محدد) ──
+            if not user_lat or not user_lon:
+                cache_key = f"nearby_agents_{profession or 'all'}"
+                cached_data = cache.get(cache_key)
+                if cached_data:
+                    return Response(cached_data)
+
+            try:
+                max_distance = float(max_distance)
+            except (ValueError, TypeError):
+                max_distance = 50.0
+
+            # جلب المهنيين الحقيقيين فقط (موثقين ومعتمدين ومتاحين حالياً)
+            # استبعاد المستخدم الحالي إذا كان مهنياً عند البحث عن القريبين
+            queryset = AgentProfile.objects.filter(
+                is_verified=True,
+                verification_status='approved',
+                user__is_online=True,
+                lat__isnull=False,
+                lon__isnull=False,
+            ).exclude(user=request.user).select_related('user').prefetch_related('portfolio_images')
+
+            if profession:
+                queryset = queryset.filter(profession=profession)
+
+            # حساب عدد التقييمات لكل مهني
+            queryset = queryset.annotate(reviews_count_cached=Count('user__reviews_received'))
+
+            agents_list = []
+            has_location = user_lat and user_lon
+
+            for agent in queryset:
+                distance = None
+                if has_location:
+                    distance = haversine_distance(user_lat, user_lon, agent.lat, agent.lon)
+
+                # فلترة حسب المسافة القصوى
+                if has_location and distance is not None and distance > max_distance:
+                    continue
+
+                agent_data = AgentProfileListSerializer(agent, context={'request': request}).data
+                if has_location:
+                    agent_data['distance'] = distance
+                else:
+                    agent_data['distance'] = None
+
+                agents_list.append(agent_data)
+
+            # ترتيب حسب المسافة إذا كان الموقع متاحاً
+            if has_location:
+                agents_list.sort(key=lambda x: x.get('distance') or float('inf'))
+
+            return Response({
+                'agents': agents_list,
+                'total': len(agents_list),
+                'has_location': has_location,
+            })
+
+        except Exception as e:
+            logger.exception("NearbyAgentsView Error")
+            return Response({
+                'agents': [],
+                'total': 0,
+                'has_location': False,
+                'error': str(e),
+            }, status=500)
+
+
+class AgentDetailView(APIView):
+    """
+    إرجاع التفاصيل الكاملة لمهني معين مع صور portfolio.
+    يمكن تمرير ?lat=xxx&lon=xxx لحساب المسافة.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, pk):
+        try:
+            # البحث عن المهني (تخفيف القيود للعرض المباشر)
+            agent = AgentProfile.objects.filter(pk=pk).select_related('user').prefetch_related('portfolio_images').annotate(
+                reviews_count_cached=Count('user__reviews_received')
+            ).first()
+
+            if not agent:
+                return Response({'error': 'المهني غير موجود'}, status=404)
+            
+            # إذا لم يكن موثقاً، لا يظهر للآخرين ولكن يظهر لنفسه وللأدمن
+            if not agent.is_verified and agent.user != request.user and not request.user.is_superuser:
+                return Response({'error': 'هذا الملف بانتظار التوثيق'}, status=403)
+
+            user_lat = request.query_params.get('lat')
+            user_lon = request.query_params.get('lon')
+
+            serializer = AgentProfileDetailSerializer(agent, context={'request': request})
+            data = serializer.data
+
+            # حساب المسافة إذا كان الموقع متاحاً
+            if user_lat and user_lon:
+                distance = haversine_distance(user_lat, user_lon, agent.lat, agent.lon)
+                data['distance'] = distance
+            else:
+                data['distance'] = None
+
+            return Response(data)
+
+        except Exception as e:
+            logger.exception("AgentDetailView Error")
+            return Response({'error': str(e)}, status=500)
+
+
+class NearbyAgentsByCategoryView(APIView):
+    """
+    إرجاع المهنيين الحقيقيين حسب القسم (category)
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, category_id):
+        try:
+            from .models import Category
+            category = get_object_or_404(Category, id=category_id)
+
+            # ربط القسم بالمهنة
+            profession = category.related_profession
+            if not profession:
+                return Response({
+                    'agents': [],
+                    'total': 0,
+                    'message': 'لا توجد مهنة مرتبطة بهذا القسم',
+                })
+
+            # إعادة توجيه الطلب مع إضافة معلمة المهنة
+            request.query_params._mutable = True
+            request.query_params['profession'] = profession
+            request.query_params._mutable = False
+
+            nearby_view = NearbyAgentsView()
+            nearby_view.request = request
+            nearby_view.kwargs = {}
+            return nearby_view.get(request)
+
+        except Exception as e:
+            logger.exception("NearbyAgentsByCategoryView Error")
+            return Response({'agents': [], 'total': 0, 'error': str(e)}, status=500)
 
 class ChatConversationsView(APIView):
     def get(self, request): return Response([])

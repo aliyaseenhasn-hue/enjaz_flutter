@@ -454,11 +454,25 @@
       const payload = { profession: prof };
       if (customProf) payload.custom_profession = customProf;
       try {
-        await fetch('/api/auth/agent/profile/', {
+        const agentRes = await fetch('/api/auth/agent/profile/', {
           method: 'PUT',
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
+        if (agentRes.ok) {
+          // ✅ تحديث واجهة التخصص بعد الحفظ الناجح
+          const agentData = await agentRes.json();
+          // تحديث الـ select box
+          const matched = [...professionSelect.options].some(o => o.value === agentData.profession);
+          if (agentData.profession === 'other' || !matched) {
+            professionSelect.value = 'other';
+            customProfInput.value = agentData.custom_profession || '';
+            customProfField.style.display = 'block';
+          } else {
+            professionSelect.value = agentData.profession;
+            customProfField.style.display = 'none';
+          }
+        }
       } catch (e) { console.warn(e); }
     }
 

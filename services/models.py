@@ -5,6 +5,9 @@ services/models.py
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Avg
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from authentication.models import AgentProfile
 
 
@@ -101,13 +104,21 @@ class RequestTimeline(models.Model):
 
 
 class Review(models.Model):
-    request = models.OneToOneField(ServiceRequest, on_delete=models.CASCADE, related_name='review')
-    customer = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews_given'
+    REVIEW_TYPES = (
+        ('to_agent', 'تقييم للمهني'),
+        ('to_customer', 'تقييم للزبون'),
     )
-    agent = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews_received'
+    
+    request = models.ForeignKey(ServiceRequest, on_delete=models.CASCADE, related_name='reviews')
+    reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews_written',
+        null=True, blank=True
     )
+    reviewee = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reviews_about_me', null=True, blank=True
+    )
+    review_type = models.CharField(max_length=20, choices=REVIEW_TYPES, default='to_agent')
+    
     rating = models.IntegerField(verbose_name="التقييم (1-5)")
     comment = models.TextField(blank=True, verbose_name="التعليق")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -115,9 +126,10 @@ class Review(models.Model):
     class Meta:
         verbose_name = "تقييم"
         verbose_name_plural = "التقييمات"
+        unique_together = ('request', 'reviewer', 'review_type')
 
     def __str__(self):
-        return f"تقييم {self.rating}/5 — {self.request.title}"
+        return f"تقييم {self.rating}/5 من {self.reviewer} إلى {self.reviewee} ({self.get_review_type_display()})"
 
 
 class RequestMessage(models.Model):
@@ -158,3 +170,23 @@ class WalletTransaction(models.Model):
 
     def __str__(self):
         return f"{self.get_transaction_type_display()} — {self.amount} د.ع"
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.db.models import Avg
+
+@receiver(post_save, sender=Review)
+def update_user_ratings(sender, instance, **kwargs):
+    if instance.review_type == 'to_agent':
+        profile = getattr(instance.reviewee, 'agent_profile', None)
+        if profile:
+            avg = Review.objects.filter(reviewee=instance.reviewee, review_type='to_agent').aggregate(Avg('rating'))['rating__avg']
+            profile.rating = avg or 0.0
+            profile.save()
+    elif instance.review_type == 'to_customer':
+        user = instance.reviewee
+        avg = Review.objects.filter(reviewee=user, review_type='to_customer').aggregate(Avg('rating'))['rating__avg']
+        count = Review.objects.filter(reviewee=user, review_type='to_customer').count()
+        user.customer_rating = avg or 0.0
+        user.customer_total_reviews = count
+        user.save()

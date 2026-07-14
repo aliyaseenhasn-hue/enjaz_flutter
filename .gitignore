@@ -8,3 +8,6 @@ __pycache__/
 .idea/
 v_env/
 venv/
+firebase-auth.json
+pk_*.txt
+*.log

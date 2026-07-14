@@ -1,6 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
+from django.contrib.auth import views as auth_views
 
 
 urlpatterns = [
@@ -20,6 +21,7 @@ urlpatterns = [
     # ── توثيق رقم الهاتف وتعيين كلمة المرور (لحسابات Google) ────────────
     path('send-verification-code/', views.SendVerificationCodeView.as_view(), name='send-verification-code'),
     path('verify-phone/', views.VerifyPhoneView.as_view(), name='verify-phone'),
+    path('complete-profile/', views.CompleteProfileView.as_view(), name='complete-profile'),
     path('toggle-online/', views.ToggleOnlineView.as_view(), name='toggle-online'),
     path('update-fcm-token/', views.UpdateFcmTokenView.as_view(), name='update-fcm-token'),
 
@@ -38,8 +40,8 @@ urlpatterns = [
     path('change-role/', views.ChangeRoleView.as_view(), name='change-role'),
 
     # ── إدارة صور الإنجاز (Portfolio) ───────────────────────────────────
-    path('portfolio/add/', views.add_portfolio_image, name='add_portfolio_image'),
-    path('portfolio/delete/<int:pk>/', views.delete_portfolio_image, name='delete_portfolio_image'),
+    path('portfolio/add/', views.AddPortfolioImageView.as_view(), name='add_portfolio_image'),
+    path('portfolio/delete/<int:pk>/', views.DeletePortfolioImageView.as_view(), name='delete_portfolio_image'),
 
     # ── إنشاء جلسة Django من توكن JWT (للتكامل مع القوالب￼) ──────────────
     path('django-login/', views.DjangoSessionLoginView.as_view(), name='django-login'),
@@ -47,8 +49,27 @@ urlpatterns = [
     path('upload-identity/', views.UploadIdentityView.as_view(), name='upload-identity'),
 
     # ── إعادة تعيين كلمة المرور ──────────────────────────────────────────
-    path('password-reset/request/', views.PasswordResetRequestView.as_view(), name='password-reset-request'),
-    path('password-reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
+    path('password-reset/request/', 
+         auth_views.PasswordResetView.as_view(
+             template_name='authentication/password_reset/password_reset_form.html',
+             email_template_name='authentication/password_reset/password_reset_email.html'
+         ),
+         name='password-reset-request'),
+    path('password-reset/<uidb64>/<token>/', 
+         auth_views.PasswordResetConfirmView.as_view(
+             template_name='authentication/password_reset/password_reset_confirm.html'
+         ),
+         name='password_reset_confirm'),
+    path('password-reset/done/', 
+         auth_views.PasswordResetDoneView.as_view(
+             template_name='authentication/password_reset/password_reset_done.html'
+         ),
+         name='password_reset_done'),
+    path('password-reset/complete/', 
+         auth_views.PasswordResetCompleteView.as_view(
+             template_name='authentication/password_reset/password_reset_complete.html'
+         ),
+         name='password-reset-complete'),
 
     path('favorites/', views.FavoriteListCreateView.as_view(), name='favorites-list'),
 path('favorites/<int:agent_id>/', views.FavoriteDeleteView.as_view(), name='favorites-delete'),

@@ -9,11 +9,30 @@ logger = logging.getLogger(__name__)
 
 def normalize_iraqi_phone(phone):
     if not phone: return ''
-    digits = ''.join(ch for ch in phone if ch.isdigit())
+    phone_str = str(phone)
+    digits = ''.join(ch for ch in phone_str if ch.isdigit())
     if digits.startswith('00964') and len(digits) == 14: return '0' + digits[5:]
     if digits.startswith('964') and len(digits) == 13: return '0' + digits[3:]
     if digits.startswith('7') and len(digits) == 10: return '0' + digits
     return digits
+
+class PortfolioItemSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PortfolioImage
+        fields = ['id', 'caption', 'image', 'uploaded_at']
+    
+    def get_image(self, obj):
+        try:
+            if obj.image and hasattr(obj.image, 'url'):
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(obj.image.url)
+                return f"https://njazzz.pythonanywhere.com{obj.image.url}"
+        except:
+            pass
+        return None
 
 class AgentProfileSerializer(serializers.ModelSerializer):
     id_card_front = serializers.SerializerMethodField()
@@ -23,16 +42,32 @@ class AgentProfileSerializer(serializers.ModelSerializer):
     full_name = serializers.ReadOnlyField(source='user.full_name')
     phone_number = serializers.ReadOnlyField(source='user.phone_number')
     user_id = serializers.ReadOnlyField(source='user.id')
+    
+    # حقول إضافية للتوافق مع ProfessionalListModel في Flutter
+    avg_rating = serializers.FloatField(source='rating', read_only=True)
+    total_reviews = serializers.IntegerField(source='total_jobs', read_only=True)
+    profile_photo = serializers.SerializerMethodField()
+    is_online = serializers.BooleanField(source='user.is_online', read_only=True)
 
     class Meta:
         model = AgentProfile
         fields = [
             'id', 'user_id', 'full_name', 'phone_number', 'bio', 
             'is_verified', 'verification_status', 'balance', 'rating', 
-            'total_jobs', 'id_card_front', 'id_card_back', 'profession', 
+            'avg_rating', 'total_jobs', 'total_reviews', 'profile_photo',
+            'is_online', 'id_card_front', 'id_card_back', 'profession', 
             'custom_profession', 'city', 'whatsapp_number', 
             'full_name_at_verification', 'profession_display', 'portfolio_images'
         ]
+
+    def get_profile_photo(self, obj):
+        try:
+            if obj.user.avatar and hasattr(obj.user.avatar, 'url'):
+                request = self.context.get('request')
+                if request: return request.build_absolute_uri(obj.user.avatar.url)
+                return f"https://njazzz.pythonanywhere.com{obj.user.avatar.url}"
+        except: pass
+        return None
 
     def get_profession_display(self, obj):
         return obj.get_profession_display()
@@ -43,7 +78,7 @@ class AgentProfileSerializer(serializers.ModelSerializer):
                 request = self.context.get('request')
                 if request:
                     return request.build_absolute_uri(obj.id_card_front.url)
-                return obj.id_card_front.url
+                return f"https://njazzz.pythonanywhere.com{obj.id_card_front.url}"
         except:
             pass
         return None
@@ -54,7 +89,7 @@ class AgentProfileSerializer(serializers.ModelSerializer):
                 request = self.context.get('request')
                 if request:
                     return request.build_absolute_uri(obj.id_card_back.url)
-                return obj.id_card_back.url
+                return f"https://njazzz.pythonanywhere.com{obj.id_card_back.url}"
         except:
             pass
         return None
@@ -63,6 +98,20 @@ class AgentProfileSerializer(serializers.ModelSerializer):
         """إرجاع صور المعرض مع URLs كاملة"""
         images = obj.portfolio_images.all()
         return PortfolioItemSerializer(images, many=True, context=self.context).data
+
+class CategorySerializer(serializers.ModelSerializer):
+    name_ar = serializers.CharField(source='name')
+    class Meta:
+        from services.models import Category
+        model = Category
+        fields = ['id', 'name_ar', 'icon', 'description', 'order']
+
+class ReviewSerializer(serializers.ModelSerializer):
+    customer_name = serializers.ReadOnlyField(source='reviewer.full_name')
+    class Meta:
+        from services.models import Review
+        model = Review
+        fields = ['id', 'customer_name', 'rating', 'comment', 'created_at']
 
 class UserSerializer(serializers.ModelSerializer):
     agent_profile = serializers.SerializerMethodField()
@@ -78,8 +127,10 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'phone_number', 'full_name', 'role', 'profile_photo', 
-            'is_online', 'agent_profile', 'wallet_balance', 
-            'total_requests', 'pending_requests', 'is_verified', 'verification_status'
+            'is_online', 'agent_profile', 'wallet_balance',
+            'total_requests', 'pending_requests', 'is_verified', 'verification_status',
+            'is_customer_verified', 'customer_rating', 'customer_total_reviews',
+            'is_profile_complete'
         ]
 
     def get_role(self, obj):
@@ -97,7 +148,7 @@ class UserSerializer(serializers.ModelSerializer):
             if obj.avatar and hasattr(obj.avatar, 'url'):
                 request = self.context.get('request')
                 if request: return request.build_absolute_uri(obj.avatar.url)
-                return obj.avatar.url
+                return f"https://njazzz.pythonanywhere.com{obj.avatar.url}"
         except: pass
         return None
 
@@ -105,7 +156,6 @@ class UserSerializer(serializers.ModelSerializer):
         try:
             profile = getattr(obj, 'agent_profile', None)
             if profile:
-                # نمرر الـ context لضمان بناء روابط الصور بشكل كامل
                 return AgentProfileSerializer(profile, context=self.context).data
         except: pass
         return None
@@ -176,44 +226,43 @@ class TokenResponseSerializer(serializers.Serializer):
             'user': UserSerializer(user, context=context).data
         }
 
-class CategorySerializer(serializers.ModelSerializer):
-    name_ar = serializers.CharField(source='name')
-    class Meta:
-        from services.models import Category
-        model = Category
-        fields = ['id', 'name_ar', 'icon', 'description', 'order']
-
-class PortfolioItemSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = PortfolioImage
-        fields = ['id', 'caption', 'image', 'uploaded_at']
-    
-    def get_image(self, obj):
-        try:
-            if obj.image and hasattr(obj.image, 'url'):
-                request = self.context.get('request')
-                if request:
-                    return request.build_absolute_uri(obj.image.url)
-                # إذا لم يكن هناك request، إرجع الـ URL النسبي على الأقل
-                return obj.image.url
-        except:
-            pass
-        return None
-
 class ProfessionalSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    # استخدام حقول مباشرة بدلاً من UserSerializer بالكامل لتجنب التعليق
+    full_name = serializers.CharField(source='user.full_name', read_only=True)
+    profile_photo = serializers.SerializerMethodField()
+    phone_number = serializers.CharField(source='user.phone_number', read_only=True)
+    is_online = serializers.BooleanField(source='user.is_online', read_only=True)
+    
     title = serializers.CharField(source='get_profession_display', read_only=True)
     profession_display = serializers.CharField(source='get_profession_display', read_only=True)
+
     class Meta:
         model = AgentProfile
-        fields = ['id', 'user', 'title', 'profession_display', 'city', 'rating', 'total_jobs']
+        fields = [
+            'id', 'full_name', 'profile_photo', 'phone_number', 'is_online',
+            'title', 'profession_display', 'city', 'rating', 'total_jobs'
+        ]
+
+    def get_profile_photo(self, obj):
+        try:
+            if obj.user.avatar and hasattr(obj.user.avatar, 'url'):
+                request = self.context.get('request')
+                if request: return request.build_absolute_uri(obj.user.avatar.url)
+                return f"https://njazzz.pythonanywhere.com{obj.user.avatar.url}"
+        except: pass
+        return None
 
 class ProfessionalDetailSerializer(ProfessionalSerializer):
     portfolio_images = PortfolioItemSerializer(many=True, read_only=True)
+    reviews = serializers.SerializerMethodField()
+    
     class Meta(ProfessionalSerializer.Meta):
-        fields = ProfessionalSerializer.Meta.fields + ['portfolio_images']
+        fields = ProfessionalSerializer.Meta.fields + ['portfolio_images', 'reviews']
+
+    def get_reviews(self, obj):
+        from services.models import Review
+        reviews = Review.objects.filter(reviewee=obj.user, review_type='to_agent').order_by('-created_at')[:10]
+        return ReviewSerializer(reviews, many=True).data
 
 class FavoriteSerializer(serializers.ModelSerializer):
     agent = AgentProfileSerializer()
