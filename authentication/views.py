@@ -102,28 +102,36 @@ class GoogleAuthView(APIView):
 class SendVerificationCodeView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
-        phone_raw = request.data.get('phone_number')
-        if not phone_raw:
-            return Response({"detail": "يرجى إدخال رقم الهاتف"}, status=400)
-        
-        phone = internal_normalize_phone(phone_raw)
-        if not phone:
-            return Response({"detail": "رقم الهاتف غير صالح"}, status=400)
+        try:
+            phone_raw = request.data.get('phone_number')
+            if not phone_raw:
+                return Response({"detail": "يرجى إدخال رقم الهاتف"}, status=400)
             
-        # إنشاء رمز افتراضي للتطوير
-        otp = "123456"
-        
-        # حفظ الرمز في قاعدة البيانات للمستخدم (إن وجد) أو بشكل مؤقت
-        # في الحقيقة، يفضل تحديث أو إنشاء مستخدم "غير نشط" أو حفظه في الـ Cache
-        user, created = User.objects.get_or_create(phone_number=phone)
-        user.verification_code = otp
-        user.verification_code_expiry = now() + timedelta(minutes=10)
-        user.save()
-        
-        return Response({
-            "detail": f"تم إرسال رمز التحقق إلى {phone_raw}",
-            "debug_otp": otp # للسهولة أثناء التطوير
-        }, status=200)
+            phone = internal_normalize_phone(phone_raw)
+            if not phone:
+                return Response({"detail": "رقم الهاتف غير صالح"}, status=400)
+
+            # إنشاء رمز افتراضي للتطوير
+            otp = "123456"
+
+            # حفظ الرمز في قاعدة البيانات للمستخدم (إن وجد) أو بشكل مؤقت
+            # في الحقيقة، يفضل تحديث أو إنشاء مستخدم "غير نشط" أو حفظه في الـ Cache
+            user, created = User.objects.get_or_create(phone_number=phone)
+            user.verification_code = otp
+            user.verification_code_expiry = now() + timedelta(minutes=10)
+            user.save()
+
+            return Response({
+                "detail": f"تم إرسال رمز التحقق إلى {phone_raw}",
+                "debug_otp": otp # للسهولة أثناء التطوير
+            }, status=200)
+        except Exception as e:
+            logger.error(f"Error sending verification code: {str(e)}", exc_info=True)
+            return Response({
+                "detail": "حدث خطأ أثناء إرسال رمز التحقق",
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }, status=500)
 
 class VerifyPhoneView(APIView):
     permission_classes = [AllowAny]
