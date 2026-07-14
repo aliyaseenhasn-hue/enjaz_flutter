@@ -501,22 +501,32 @@ class ProfessionalListView(APIView):
                 # محاولة البحث إذا كان المرسل هو ID القسم
                 cat_obj = Category.objects.get(id=int(category))
 
-                # إذا كانت فئة المحاماة، نركز على القريبين فقط كما طلب المستخدم
-                is_lawyer = "محام" in cat_obj.name or "قانون" in cat_obj.name
-                if is_lawyer:
-                    if not lat or not lng:
-                        # إذا لم يتم إرسال موقع، قد نرغب في إرجاع فارغ أو تحذير،
-                        # لكننا سنكتفي بالتصفية حسب المهنة حالياً
-                        pass
-
                 if cat_obj.related_profession:
                     # تصفية حسب المهنة المرتبطة بالقسم
                     agents = agents.filter(profession=cat_obj.related_profession)
                 else:
-                    agents = agents.filter(Q(profession=category) | Q(custom_profession__icontains=category))
+                    # محاولة مطابقة اسم القسم مع كود المهنة من الاختيارات
+                    profession_code = None
+                    for code, label in AgentProfile.PROFESSION_CHOICES:
+                        if label in cat_obj.name or cat_obj.name in label:
+                            profession_code = code
+                            break
+
+                    if profession_code:
+                        agents = agents.filter(profession=profession_code)
+                    else:
+                        agents = agents.filter(
+                            Q(profession__icontains=cat_obj.name) |
+                            Q(custom_profession__icontains=cat_obj.name)
+                        )
             except (ValueError, Category.DoesNotExist):
                 # إذا لم يكن رقماً، نفترض أنه نص المهنة مباشرة
                 agents = agents.filter(Q(profession=category) | Q(custom_profession__icontains=category))
+
+        # دعم معلمات الموقع بكلا الاسمين lng و lon
+        lat = request.query_params.get('lat')
+        lng = request.query_params.get('lng') or request.query_params.get('lon')
+        radius = request.query_params.get('radius', 50)
 
         if lat and lng:
             try:
@@ -525,7 +535,6 @@ class ProfessionalListView(APIView):
                 radius_km = float(radius)
                 
                 # فلترة المربع (Bounding Box) لتسريع الأداء
-                # 1 درجة عرض ≈ 111 كم
                 lat_deg = radius_km / 111.0
                 lng_deg = radius_km / (111.0 * 0.8) 
 

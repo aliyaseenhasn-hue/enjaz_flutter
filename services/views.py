@@ -359,16 +359,22 @@ class NearbyAgentsByCategoryView(APIView):
             # ربط القسم بالمهنة
             profession = category.related_profession
             if not profession:
-                return Response({
-                    'agents': [],
-                    'total': 0,
-                    'message': 'لا توجد مهنة مرتبطة بهذا القسم',
-                })
+                # محاولة مطابقة اسم القسم مع كود المهنة من الاختيارات
+                for code, label in AgentProfile.PROFESSION_CHOICES:
+                    if label in category.name or category.name in label:
+                        profession = code
+                        break
 
-            # إعادة توجيه الطلب مع إضافة معلمة المهنة
-            request.query_params._mutable = True
-            request.query_params['profession'] = profession
-            request.query_params._mutable = False
+            if not profession:
+                # إذا لم نجد مهنة مطابقة، نبحث عن المهنيين الذين لديهم هذا الاسم في المهنة المخصصة
+                request.query_params._mutable = True
+                request.query_params['profession'] = category.name
+                request.query_params._mutable = False
+            else:
+                # إعادة توجيه الطلب مع إضافة معلمة المهنة
+                request.query_params._mutable = True
+                request.query_params['profession'] = profession
+                request.query_params._mutable = False
 
             nearby_view = NearbyAgentsView()
             nearby_view.request = request

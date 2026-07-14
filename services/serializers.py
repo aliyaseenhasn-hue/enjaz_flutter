@@ -156,17 +156,19 @@ class ReviewSerializer(serializers.ModelSerializer):
 class ServiceRequestListSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
-    customer_name = serializers.SerializerMethodField()
+    customer = SimpleUserSerializer(read_only=True)
+    agent = SimpleUserSerializer(read_only=True)
 
     def get_category_name(self, obj):
         return obj.category.name if obj.category else ""
 
-    def get_customer_name(self, obj):
-        return obj.customer.full_name if obj.customer else ""
-
     class Meta:
         model = ServiceRequest
-        fields = ['id', 'title', 'category_name', 'customer_name', 'status', 'status_display', 'created_at']
+        fields = [
+            'id', 'title', 'details', 'category_name', 'customer', 'agent',
+            'status', 'status_display', 'created_at', 'location',
+            'estimated_price', 'lat', 'lon'
+        ]
 
 class ServiceRequestDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
