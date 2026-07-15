@@ -440,6 +440,13 @@ class RequestMessagesView(APIView):
 
         return Response(RequestMessageSerializer(msg).data, status=201)
 
+class MarkMessagesReadView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    def post(self, request, pk):
+        req = get_object_or_404(ServiceRequest, pk=pk)
+        req.messages.exclude(sender=request.user).update(is_read=True)
+        return Response({"message": "تم التحديث"})
+
 class WalletInfoView(APIView):
     def get(self, request): return Response({'balance': 0})
 

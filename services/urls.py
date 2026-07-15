@@ -18,6 +18,7 @@ urlpatterns = [
     path('requests/<int:pk>/cancel/',   views.CancelRequestView.as_view(),        name='request-cancel'),
     path('requests/<int:pk>/review/',   views.SubmitReviewView.as_view(),         name='request-review'),
     path('requests/<int:pk>/messages/', views.RequestMessagesView.as_view(),      name='request-messages'),
+    path('requests/<int:pk>/mark_read/', views.MarkMessagesReadView.as_view(),    name='request-mark-read'),
 
     # ── طلبات الخدمة (المهني) ────────────────────────────────────
     path('agent/available/',         views.AvailableRequestsForAgentView.as_view(),   name='available-requests'),
