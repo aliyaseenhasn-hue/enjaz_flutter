@@ -138,6 +138,7 @@ class RequestMessage(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages'
     )
     content = models.TextField(verbose_name="نص الرسالة")
+    is_read = models.BooleanField(default=False, verbose_name="تمت القراءة")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

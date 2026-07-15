@@ -76,7 +76,7 @@ class ServiceRequestCreateView(APIView):
 
                 # جلب المندوب بشكل آمن
                 agent = None
-                agent_id = data.get('agent_id') or data.get('professional_id')
+                agent_id = data.get('agent') or data.get('agent_id') or data.get('professional_id')
                 if agent_id:
                     try:
                         agent = User.objects.get(id=int(agent_id))
@@ -405,6 +405,10 @@ class RequestMessagesView(APIView):
             return Response({"detail": "غير مصرح لك"}, status=403)
 
         messages = req.messages.all().order_by('created_at')
+        
+        # تحديث الرسائل غير المقروءة لتصبح مقروءة عند فتح المحادثة
+        req.messages.exclude(sender=request.user).update(is_read=True)
+
         return Response(RequestMessageSerializer(messages, many=True).data)
 
     def post(self, request, pk):

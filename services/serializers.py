@@ -158,16 +158,34 @@ class ServiceRequestListSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     customer = SimpleUserSerializer(read_only=True)
     agent = SimpleUserSerializer(read_only=True)
+    unread_count = serializers.SerializerMethodField()
+    last_message = serializers.SerializerMethodField()
 
     def get_category_name(self, obj):
         return obj.category.name if obj.category else ""
+
+    def get_unread_count(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return 0
+        return obj.messages.exclude(sender=request.user).filter(is_read=False).count()
+
+    def get_last_message(self, obj):
+        msg = obj.messages.all().order_by('-created_at').first()
+        if msg:
+            return {
+                'content': msg.content,
+                'created_at': msg.created_at,
+                'sender_id': msg.sender.id
+            }
+        return None
 
     class Meta:
         model = ServiceRequest
         fields = [
             'id', 'title', 'details', 'category_name', 'customer', 'agent',
             'status', 'status_display', 'created_at', 'location',
-            'estimated_price', 'lat', 'lon'
+            'estimated_price', 'lat', 'lon', 'unread_count', 'last_message'
         ]
 
 class ServiceRequestDetailSerializer(serializers.ModelSerializer):
@@ -190,10 +208,10 @@ class ServiceRequestDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'status', 'created_at']
 
 class RequestMessageSerializer(serializers.ModelSerializer):
-    sender_name = serializers.CharField(source='sender.full_name', read_only=True)
+    sender = SimpleUserSerializer(read_only=True)
     class Meta:
         model = RequestMessage
-        fields = ['id', 'sender_name', 'content', 'created_at']
+        fields = ['id', 'sender', 'content', 'created_at']
 
 class WalletTransactionSerializer(serializers.ModelSerializer):
     class Meta:
