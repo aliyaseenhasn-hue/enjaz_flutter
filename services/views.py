@@ -181,38 +181,48 @@ class MyRequestsView(generics.ListAPIView):
 class AvailableRequestsForAgentView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        # استبعاد الطلبات التي أنشأها المستخدم نفسه كزبون
-        qs = ServiceRequest.objects.filter(status='pending', agent__isnull=True).exclude(customer=request.user)
+        # 1. جلب مهنة المستخدم الحالي من ملفه الشخصي
+        try:
+            agent_profile = request.user.agent_profile
+            user_profession = agent_profile.profession
+        except:
+            return Response([]) # ليس مهنياً
+
+        # 2. جلب الطلبات المعلقة (بدون مهني محدد) التي تطابق مهنة المستخدم
+        # أو الطلبات التي تنتمي لقسم مرتبط بمهنته
+        qs = ServiceRequest.objects.filter(
+            status='pending', 
+            agent__isnull=True
+        ).filter(
+            Q(category__related_profession=user_profession) | 
+            Q(category__name__icontains=user_profession)
+        ).exclude(customer=request.user).order_by('-created_at')
+        
         return Response(ServiceRequestListSerializer(qs, many=True).data)
 
-class AcceptRequestView(APIView):
+class RejectRequestView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def post(self, request, pk):
         req = get_object_or_404(ServiceRequest, pk=pk, status='pending')
-        req.agent = request.user
-        req.status = 'in_progress'
-        req.save()
-        return Response({"message": "تم القبول"})
-
-class UpdateRequestStatusView(APIView):
-    def post(self, request, pk):
-        req = get_object_or_404(ServiceRequest, pk=pk)
-        req.status = request.data.get('status', req.status)
-        req.save()
-        return Response({"message": "تم التحديث"})
-
-class CancelRequestView(APIView):
-    def post(self, request, pk):
-        req = get_object_or_404(ServiceRequest, pk=pk, customer=request.user)
-        req.status = 'cancelled'
-        req.save()
-        return Response({"message": "تم الإلغاء"})
-
-class SubmitReviewView(APIView):
-    def post(self, request, pk): return Response({"message": "ok"})
-
-class RejectRequestView(APIView):
-    def post(self, request, pk): return Response({"message": "ok"})
+        
+        if req.agent == request.user:
+            # إذا كان الطلب موجه له شخصياً، نقوم بفك الارتباط ليصبح عاماً أو يختفي
+            req.agent = None
+            req.save()
+            # إشعار للزبون
+            try:
+                Notification.objects.create(
+                    user=req.customer,
+                    title="اعتذار من المهني",
+                    body=f"نعتذر، المهني غير متاح حالياً. تم تحويل طلبك ({req.title}) لمهنيين آخرين.",
+                    request=req
+                )
+            except: pass
+        
+        # ملاحظة: في حال الطلب العام، "الرفض" يعني الإخفاء محلياً 
+        # يمكن مستقبلاً إضافة جدول للطلبات المتجاهلة لكل مستخدم
+        
+        return Response({"message": "تمت العملية بنجاح"})
 
 class NearbyAgentsView(APIView):
     """
