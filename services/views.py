@@ -459,13 +459,27 @@ class RequestMessagesView(APIView):
         other_user = req.agent if request.user == req.customer else req.customer
         if other_user:
             try:
-                Notification.objects.create(
+                notif = Notification.objects.create(
                     user=other_user,
                     title=f"رسالة جديدة من {request.user.full_name}",
                     body=content[:50] + "..." if len(content) > 50 else content,
                     request=req
                 )
-            except: pass
+                # إرسال إشعار Firebase (FCM) إذا كان لدى المستخدم توكن
+                if other_user.fcm_token:
+                    from core.firebase_utils import send_push_notification
+                    send_push_notification(
+                        token=other_user.fcm_token,
+                        title=f"💬 {request.user.full_name}",
+                        body=content[:100] + "..." if len(content) > 100 else content,
+                        data={
+                            'type': 'new_message',
+                            'request_id': str(req.id),
+                            'sender_name': request.user.full_name,
+                        }
+                    )
+            except Exception as e:
+                logger.error(f"Error sending message notification: {e}")
 
         return Response(RequestMessageSerializer(msg).data, status=201)
 
@@ -569,6 +583,19 @@ class AcceptRequestView(APIView):
                 body=f"قام {request.user.full_name} بقبول طلبك: {req.title}",
                 request=req
             )
+            # إشعار Firebase
+            if req.customer.fcm_token:
+                from core.firebase_utils import send_push_notification
+                send_push_notification(
+                    token=req.customer.fcm_token,
+                    title=f"✅ تم قبول طلبك",
+                    body=f"{request.user.full_name} قبل طلبك: {req.title}",
+                    data={
+                        'type': 'request_accepted',
+                        'request_id': str(req.id),
+                        'agent_name': request.user.full_name,
+                    }
+                )
         except: pass
         return Response({"message": "تم قبول الطلب", "request_id": req.id})
 
