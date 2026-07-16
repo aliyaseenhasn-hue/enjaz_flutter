@@ -479,3 +479,104 @@ class AdminAssignAgentView(APIView):
 
 class AdminStatsView(APIView):
     def get(self, request): return Response({"total": 0})
+
+
+class CancelRequestView(APIView):
+    """إلغاء طلب خدمة"""
+    permission_classes = [permissions.IsAuthenticated]
+    def post(self, request, pk):
+        req = get_object_or_404(ServiceRequest, pk=pk)
+        if request.user != req.customer and request.user != req.agent:
+            return Response({"detail": "غير مصرح"}, status=403)
+        if req.status in ['completed', 'cancelled']:
+            return Response({"detail": "لا يمكن إلغاء طلب مكتمل أو ملغي"}, status=400)
+        req.status = 'cancelled'
+        req.save()
+        try:
+            Notification.objects.create(
+                user=req.customer if request.user == req.agent else req.agent,
+                title="تم إلغاء الطلب",
+                body=f"تم إلغاء طلب: {req.title}",
+                request=req
+            )
+        except: pass
+        return Response({"message": "تم إلغاء الطلب"})
+
+
+class SubmitReviewView(APIView):
+    """إرسال تقييم لطلب مكتمل"""
+    permission_classes = [permissions.IsAuthenticated]
+    def post(self, request, pk):
+        req = get_object_or_404(ServiceRequest, pk=pk)
+        if request.user != req.customer and request.user != req.agent:
+            return Response({"detail": "غير مصرح"}, status=403)
+        if req.status != 'completed':
+            return Response({"detail": "يمكن التقييم فقط للطلبات المكتملة"}, status=400)
+        rating = request.data.get('rating')
+        comment = request.data.get('comment', '')
+        if not rating:
+            return Response({"detail": "التقييم مطلوب"}, status=400)
+        try:
+            rating = int(rating)
+            if rating < 1 or rating > 5:
+                return Response({"detail": "التقييم من 1 إلى 5"}, status=400)
+        except:
+            return Response({"detail": "التقييم غير صالح"}, status=400)
+        review_type = 'to_agent' if request.user == req.customer else 'to_customer'
+        reviewee = req.agent if request.user == req.customer else req.customer
+        review, created = Review.objects.get_or_create(
+            request=req,
+            reviewer=request.user,
+            review_type=review_type,
+            defaults={'reviewee': reviewee, 'rating': rating, 'comment': comment}
+        )
+        if not created:
+            return Response({"detail": "لقد قيّمت هذا الطلب مسبقاً"}, status=400)
+        return Response(ReviewSerializer(review).data, status=201)
+
+
+class AcceptRequestView(APIView):
+    """قبول طلب من قبل مهني"""
+    permission_classes = [permissions.IsAuthenticated]
+    def post(self, request, pk):
+        req = get_object_or_404(ServiceRequest, pk=pk, status='pending')
+        req.agent = request.user
+        req.status = 'in_progress'
+        req.save()
+        try:
+            Notification.objects.create(
+                user=req.customer,
+                title="تم قبول طلبك",
+                body=f"قام {request.user.full_name} بقبول طلبك: {req.title}",
+                request=req
+            )
+        except: pass
+        return Response({"message": "تم قبول الطلب", "request_id": req.id})
+
+
+class UpdateRequestStatusView(APIView):
+    """تحديث حالة الطلب من قبل المهني"""
+    permission_classes = [permissions.IsAuthenticated]
+    def post(self, request, pk):
+        req = get_object_or_404(ServiceRequest, pk=pk)
+        if request.user != req.agent:
+            return Response({"detail": "غير مصرح"}, status=403)
+        new_status = request.data.get('status')
+        if new_status not in ['in_progress', 'completed', 'cancelled']:
+            return Response({"detail": "حالة غير صالحة"}, status=400)
+        req.status = new_status
+        if new_status == 'completed':
+            final_price = request.data.get('final_price')
+            if final_price:
+                try: req.final_price = int(float(final_price))
+                except: pass
+        req.save()
+        try:
+            Notification.objects.create(
+                user=req.customer,
+                title=f"تحديث حالة الطلب",
+                body=f"تم تحديث حالة طلبك ({req.title}) إلى {req.get_status_display()}",
+                request=req
+            )
+        except: pass
+        return Response({"message": "تم تحديث الحالة", "status": new_status})
