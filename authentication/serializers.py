@@ -201,9 +201,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         custom_profession = validated_data.pop('custom_profession', None)
         password = validated_data.pop('password')
         
-        user = User.objects.create_user(**validated_data)
-        user.set_password(password)
-        user.save()
+        # ✅ تمرير كلمة المرور مباشرة إلى create_user لتشفيرها مرة واحدة فقط
+        user = User.objects.create_user(
+            phone_number=validated_data.get('phone_number'),
+            password=password,
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', ''),
+            role=validated_data.get('role', 'customer'),
+        )
         
         if user.role == 'agent' or profession:
             AgentProfile.objects.create(
