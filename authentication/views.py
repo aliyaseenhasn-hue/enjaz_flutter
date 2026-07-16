@@ -124,8 +124,15 @@ class SendVerificationCodeView(APIView):
             otp = "123456"
 
             # حفظ الرمز في قاعدة البيانات للمستخدم (إن وجد) أو بشكل مؤقت
-            # في الحقيقة، يفضل تحديث أو إنشاء مستخدم "غير نشط" أو حفظه في الـ Cache
-            user, created = User.objects.get_or_create(phone_number=phone)
+            # استخدام update_or_create لتجنب مشكلة username المطلوب
+            user, created = User.objects.get_or_create(
+                phone_number=phone,
+                defaults={
+                    'username': phone,
+                    'first_name': phone,
+                    'last_name': '',
+                }
+            )
             user.verification_code = otp
             user.verification_code_expiry = now() + timedelta(minutes=10)
             user.save()

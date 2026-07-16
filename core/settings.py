@@ -155,7 +155,15 @@ SIMPLE_JWT = {
 }
 
 # إعدادات الـ CORS والـ SSL المحسنة
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "https://enjazzzzz.web.app",
+    "https://enjazzzzz.firebaseapp.com",
+    "https://njazzz.pythonanywhere.com",
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+    "https://enjazzzzz--pr-*.web.app",
+]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
 CORS_ALLOW_HEADERS = [
@@ -170,6 +178,9 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
+# السماح بالأصول الديناميكية للتطوير
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
 
 # ضروري لـ PythonAnywhere للتعرف على الروابط المشفرة (HTTPS)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
