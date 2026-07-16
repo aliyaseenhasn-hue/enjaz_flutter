@@ -130,13 +130,30 @@ class ServiceRequestCreateView(APIView):
                             body=f"لديك طلب خدمة جديد مباشر من {request.user.full_name}",
                             request=req
                         )
-                    elif category.related_profession:
-                        # طلب عام لكل المهنيين في هذا التخصص
+                    else:
+                        # طلب عام - البحث عن المهنيين المناسبين
                         target_profession = category.related_profession
+                        
+                        # إذا لم يكن هناك related_profession، نحاول مطابقة اسم القسم مع المهنة
+                        if not target_profession:
+                            for code, label in AgentProfile.PROFESSION_CHOICES:
+                                if label in category.name or category.name in label:
+                                    target_profession = code
+                                    break
+                        
+                        # البحث عن المهنيين حسب المهنة أو اسم القسم
                         related_agents = AgentProfile.objects.filter(
-                            profession=target_profession,
                             is_verified=True
                         ).exclude(user=request.user).select_related('user')
+                        
+                        if target_profession:
+                            related_agents = related_agents.filter(profession=target_profession)
+                        else:
+                            # محاولة مطابقة اسم القسم مع المهنة المخصصة
+                            related_agents = related_agents.filter(
+                                Q(profession__icontains=category.name) |
+                                Q(custom_profession__icontains=category.name)
+                            )
 
                         for profile in related_agents:
                             Notification.objects.create(
@@ -190,12 +207,14 @@ class AvailableRequestsForAgentView(APIView):
 
         # 2. جلب الطلبات المعلقة (بدون مهني محدد) التي تطابق مهنة المستخدم
         # أو الطلبات التي تنتمي لقسم مرتبط بمهنته
+        # أو الطلبات التي اسم القسم يطابق اسم المهنة
         qs = ServiceRequest.objects.filter(
             status='pending', 
             agent__isnull=True
         ).filter(
             Q(category__related_profession=user_profession) | 
-            Q(category__name__icontains=user_profession)
+            Q(category__name__icontains=user_profession) |
+            Q(category__name__icontains=dict(AgentProfile.PROFESSION_CHOICES).get(user_profession, ''))
         ).exclude(customer=request.user).order_by('-created_at')
         
         return Response(ServiceRequestListSerializer(qs, many=True).data)
