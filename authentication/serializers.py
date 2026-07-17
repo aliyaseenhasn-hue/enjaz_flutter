@@ -130,7 +130,7 @@ class UserSerializer(serializers.ModelSerializer):
             'is_online', 'agent_profile', 'wallet_balance',
             'total_requests', 'pending_requests', 'is_verified', 'verification_status',
             'is_customer_verified', 'customer_rating', 'customer_total_reviews',
-            'is_profile_complete'
+            'is_profile_complete', 'needs_phone_completion'
         ]
         extra_kwargs = {
             'avatar': {'write_only': True}
@@ -188,10 +188,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     password_confirm = serializers.CharField(write_only=True)
     profession = serializers.CharField(write_only=True, required=False)
     custom_profession = serializers.CharField(write_only=True, required=False)
+    full_name = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User
-        fields = ['phone_number', 'first_name', 'last_name', 'role', 'password', 'password_confirm', 'profession', 'custom_profession']
+        fields = ['phone_number', 'first_name', 'last_name', 'full_name', 'role', 'password', 'password_confirm', 'profession', 'custom_profession']
 
     def validate(self, data):
         if data['password'] != data['password_confirm']:
@@ -203,13 +204,22 @@ class RegisterSerializer(serializers.ModelSerializer):
         profession = validated_data.pop('profession', None)
         custom_profession = validated_data.pop('custom_profession', None)
         password = validated_data.pop('password')
+        full_name = validated_data.pop('full_name', None)
         
+        first_name = validated_data.get('first_name', '')
+        last_name = validated_data.get('last_name', '')
+        
+        if full_name and not first_name:
+            parts = full_name.strip().split(' ')
+            first_name = parts[0]
+            last_name = ' '.join(parts[1:]) if len(parts) > 1 else ''
+
         # ✅ تمرير كلمة المرور مباشرة إلى create_user لتشفيرها مرة واحدة فقط
         user = User.objects.create_user(
             phone_number=validated_data.get('phone_number'),
             password=password,
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
+            first_name=first_name,
+            last_name=last_name,
             role=validated_data.get('role', 'customer'),
         )
         

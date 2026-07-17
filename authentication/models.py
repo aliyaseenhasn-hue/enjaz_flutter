@@ -64,6 +64,7 @@ class User(AbstractUser):
 
     # ─── حقل يشير إلى أن المستخدم أكمل بياناته الأساسية ───────────────────
     is_profile_complete = models.BooleanField(default=False, verbose_name="الملف الشخصي مكتمل")
+    needs_phone_completion = models.BooleanField(default=False, verbose_name="يحتاج إكمال رقم الهاتف")
 
     # ─── حقول مؤقتة لتوثيق رقم الهاتف عبر رمز التحقق ──────────────────────
     temp_phone = models.CharField(max_length=15, null=True, blank=True, verbose_name="رقم مؤقت للتحقق")
