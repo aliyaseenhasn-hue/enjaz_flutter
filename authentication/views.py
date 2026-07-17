@@ -243,6 +243,7 @@ class ToggleOnlineView(APIView):
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     def get(self, request): return Response(UserSerializer(request.user, context={'request': request}).data)
     def patch(self, request):
         serializer = UserSerializer(request.user, data=request.data, partial=True, context={'request': request})

@@ -126,12 +126,15 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'phone_number', 'full_name', 'role', 'profile_photo', 
+            'id', 'phone_number', 'full_name', 'role', 'profile_photo', 'avatar',
             'is_online', 'agent_profile', 'wallet_balance',
             'total_requests', 'pending_requests', 'is_verified', 'verification_status',
             'is_customer_verified', 'customer_rating', 'customer_total_reviews',
             'is_profile_complete'
         ]
+        extra_kwargs = {
+            'avatar': {'write_only': True}
+        }
 
     def get_role(self, obj):
         if obj.is_superuser: return 'admin'
