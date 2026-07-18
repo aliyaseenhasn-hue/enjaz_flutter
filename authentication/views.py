@@ -213,9 +213,7 @@ class VerifyPhoneView(APIView):
             # التحقق من الرمز المولد عشوائياً فقط
             is_valid = (str(user.verification_code) == str(code))
             
-            # السماح بالرمز 123456 فقط في وضع التطوير (DEBUG)
-            if settings.DEBUG and str(code) == "123456":
-                is_valid = True
+            # تم حذف استثناء الرمز 123456 لضمان الأمان الكامل
 
             if is_valid:
                 # التحقق من الصلاحية (إلا إذا كان الرمز هو الافتراضي)
