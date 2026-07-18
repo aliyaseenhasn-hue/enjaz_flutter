@@ -205,8 +205,12 @@ class VerifyPhoneView(APIView):
         try:
             user = User.objects.get(phone_number=phone)
             
-            # التحقق من الرمز (دعم الرمز الافتراضي 123456 للتطوير)
-            is_valid = (str(user.verification_code) == str(code)) or (str(code) == "123456")
+            # التحقق من الرمز المولد عشوائياً فقط
+            is_valid = (str(user.verification_code) == str(code))
+            
+            # السماح بالرمز 123456 فقط في وضع التطوير (DEBUG)
+            if settings.DEBUG and str(code) == "123456":
+                is_valid = True
 
             if is_valid:
                 # التحقق من الصلاحية (إلا إذا كان الرمز هو الافتراضي)
