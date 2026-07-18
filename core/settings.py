@@ -192,6 +192,10 @@ CSRF_COOKIE_SECURE = False
 OTPIQ_API_KEY = config('OTPIQ_API_KEY', default='')
 OTPIQ_SENDER_ID = config('OTPIQ_SENDER_ID', default='Enjaz')
 
+# Green API for WhatsApp OTP
+GREEN_API_ID = config('GREEN_API_ID', default='')
+GREEN_API_TOKEN = config('GREEN_API_TOKEN', default='')
+
 # إعدادات django-allauth المحسنة
 SITE_ID = 1
 

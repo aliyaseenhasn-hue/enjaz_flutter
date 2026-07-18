@@ -38,6 +38,40 @@ def internal_normalize_phone(phone):
     if digits.startswith('7') and len(digits) == 10: return '0' + digits
     return digits
 
+def send_whatsapp_otp(phone, otp):
+    """
+    إرسال رمز التحقق عبر Green API
+    """
+    id_instance = getattr(settings, 'GREEN_API_ID', '')
+    api_token = getattr(settings, 'GREEN_API_TOKEN', '')
+    
+    if not id_instance or not api_token:
+        logger.warning("Green API credentials not configured. Skipping WhatsApp send.")
+        return False
+
+    # تحويل الرقم للصيغة الدولية 9647...
+    whatsapp_id = ""
+    if phone.startswith('07'):
+        whatsapp_id = f"964{phone[1:]}@c.us"
+    elif phone.startswith('7'):
+        whatsapp_id = f"964{phone}@c.us"
+    else:
+        whatsapp_id = f"{phone}@c.us"
+
+    url = f"https://api.green-api.com/waInstance{id_instance}/sendMessage/{api_token}"
+    
+    payload = {
+        "chatId": whatsapp_id,
+        "message": f"رمز التحقق الخاص بك في تطبيق إنجاز هو: {otp}\nصالح لمدة 10 دقائق."
+    }
+    
+    try:
+        response = requests.post(url, json=payload, timeout=10)
+        return response.status_code == 200
+    except Exception as e:
+        logger.error(f"Failed to send WhatsApp message: {str(e)}")
+        return False
+
 class LoginView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
@@ -120,11 +154,13 @@ class SendVerificationCodeView(APIView):
             if not phone:
                 return Response({"detail": "رقم الهاتف غير صالح"}, status=400)
 
-            # إنشاء رمز افتراضي للتطوير
-            otp = "123456"
+            # إنشاء رمز عشوائي مكون من 6 أرقام
+            otp = str(random.randint(100000, 999999))
 
-            # حفظ الرمز في قاعدة البيانات للمستخدم (إن وجد) أو بشكل مؤقت
-            # استخدام update_or_create لتجنب مشكلة username المطلوب
+            # محاولة إرسال الرمز عبر واتساب
+            sent = send_whatsapp_otp(phone, otp)
+
+            # حفظ الرمز في قاعدة البيانات للمستخدم
             user, created = User.objects.get_or_create(
                 phone_number=phone,
                 defaults={
@@ -137,16 +173,23 @@ class SendVerificationCodeView(APIView):
             user.verification_code_expiry = now() + timedelta(minutes=10)
             user.save()
 
-            return Response({
-                "detail": f"تم إرسال رمز التحقق إلى {phone_raw}",
-                "debug_otp": otp # للسهولة أثناء التطوير
-            }, status=200)
+            response_data = {
+                "detail": f"تم إرسال رمز التحقق إلى واتساب {phone_raw}",
+                "whatsapp_sent": sent
+            }
+            
+            # في وضع التطوير أو إذا فشل الإرسال، نظهر الكود في الرد للتسهيل
+            if settings.DEBUG or not sent:
+                response_data["debug_otp"] = otp
+                if not sent:
+                    response_data["detail"] = "فشل الإرسال عبر واتساب، استخدم الكود من الديباج (للتطوير فقط)"
+
+            return Response(response_data, status=200)
         except Exception as e:
             logger.error(f"Error sending verification code: {str(e)}", exc_info=True)
             return Response({
                 "detail": "حدث خطأ أثناء إرسال رمز التحقق",
-                "error": str(e),
-                "traceback": traceback.format_exc()
+                "error": str(e)
             }, status=500)
 
 class VerifyPhoneView(APIView):
