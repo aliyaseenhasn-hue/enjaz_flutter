@@ -72,6 +72,39 @@ def send_whatsapp_otp(phone, otp):
         logger.error(f"Failed to send WhatsApp message: {str(e)}")
         return False
 
+def send_telegram_otp(phone, otp):
+    """
+    إرسال نسخة من الرمز إلى التليجرام
+    """
+    token = getattr(settings, 'TELEGRAM_TOKEN', '')
+    chat_id = getattr(settings, 'TELEGRAM_ADMIN_CHAT_ID', '')
+    
+    if not token or not chat_id:
+        return False
+
+    # دعم CallMeBot إذا كان التوكن لا يشبه توكن البوت الرسمي
+    if ":" not in token:
+        # رابط خدمة CallMeBot لإرسال رسائل لتليجرام
+        url = f"https://api.callmebot.com/text.php?user=@your_username&text=OTP:{otp}&apikey={token}"
+        # ملاحظة: هذه الخدمة تحتاج اسم المستخدم، سأستخدم الرابط العام مؤقتاً
+        # ولكن الأفضل استخدام بوت تليجرام رسمي
+        url = f"https://api.telegram.org/bot{token}/sendMessage" if ":" in token else ""
+    
+    if not url:
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        
+    payload = {
+        "chat_id": chat_id,
+        "text": f"🔐 رمز التحقق لتطبيق إنجاز\n\nالرقم: {phone}\nالرمز: {otp}\n\nهذا الرمز صالح لمدة 10 دقائق."
+    }
+    
+    try:
+        response = requests.post(url, json=payload, timeout=10)
+        return response.status_code == 200
+    except Exception as e:
+        logger.error(f"Failed to send Telegram message: {str(e)}")
+        return False
+
 class LoginView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
@@ -157,8 +190,9 @@ class SendVerificationCodeView(APIView):
             # إنشاء رمز عشوائي مكون من 6 أرقام
             otp = str(random.randint(100000, 999999))
 
-            # محاولة إرسال الرمز عبر واتساب
-            sent = send_whatsapp_otp(phone, otp)
+            # محاولة إرسال الرمز عبر القنوات المختلفة
+            whatsapp_sent = send_whatsapp_otp(phone, otp)
+            telegram_sent = send_telegram_otp(phone, otp)
 
             # حفظ الرمز في قاعدة البيانات للمستخدم
             user, created = User.objects.get_or_create(
@@ -174,15 +208,15 @@ class SendVerificationCodeView(APIView):
             user.save()
 
             response_data = {
-                "detail": f"تم إرسال رمز التحقق إلى واتساب {phone_raw}",
-                "whatsapp_sent": sent
+                "detail": "تم إرسال رمز التحقق",
+                "channels": {
+                    "whatsapp": whatsapp_sent,
+                    "telegram": telegram_sent
+                }
             }
             
-            # في وضع التطوير أو إذا فشل الإرسال، نظهر الكود في الرد للتسهيل
-            if settings.DEBUG or not sent:
+            if settings.DEBUG or (not whatsapp_sent and not telegram_sent):
                 response_data["debug_otp"] = otp
-                if not sent:
-                    response_data["detail"] = "فشل الإرسال عبر واتساب، استخدم الكود من الديباج (للتطوير فقط)"
 
             return Response(response_data, status=200)
         except Exception as e:
