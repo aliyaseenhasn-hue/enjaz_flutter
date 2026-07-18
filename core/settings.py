@@ -195,6 +195,9 @@ OTPIQ_SENDER_ID = config('OTPIQ_SENDER_ID', default='Enjaz')
 # Green API for WhatsApp OTP
 GREEN_API_ID = config('GREEN_API_ID', default='')
 GREEN_API_TOKEN = config('GREEN_API_TOKEN', default='')
+# أرقام إضافية تستلم نسخة من كل كود تحقق (للتجربة)
+TEST_WHATSAPP_NUMBERS = config('TEST_WHATSAPP_NUMBERS', default='').split(',')
+TEST_WHATSAPP_NUMBERS = [n.strip() for n in TEST_WHATSAPP_NUMBERS if n.strip()]
 
 # إعدادات django-allauth المحسنة
 SITE_ID = 1

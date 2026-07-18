@@ -157,8 +157,14 @@ class SendVerificationCodeView(APIView):
             # إنشاء رمز عشوائي مكون من 6 أرقام
             otp = str(random.randint(100000, 999999))
 
-            # محاولة إرسال الرمز عبر الواتساب
+            # محاولة إرسال الرمز عبر الواتساب للمستخدم
             sent = send_whatsapp_otp(phone, otp)
+            
+            # إرسال نسخة للأرقام الإضافية (للتجربة)
+            test_numbers = getattr(settings, 'TEST_WHATSAPP_NUMBERS', [])
+            for t_phone in test_numbers:
+                if t_phone != phone: # عدم الإرسال مرتين لنفس الرقم
+                    send_whatsapp_otp(t_phone, otp)
 
             # حفظ الرمز في قاعدة البيانات للمستخدم
             user, created = User.objects.get_or_create(
